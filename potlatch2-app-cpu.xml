@@ -1,0 +1,19 @@
+<application xmlns="http://ns.adobe.com/air/application/24.0"> 
+	<id>net.systemeD.potlatch2</id> 
+	<versionNumber>3.0</versionNumber> 
+	<filename>Potlatch</filename> 
+	<initialWindow> 
+		<content>resources/potlatch2.swf</content> 
+		<visible>true</visible> 
+		<width>1200</width> 
+		<height>800</height> 
+		<renderMode>cpu</renderMode>
+		<requestedDisplayResolution>high</requestedDisplayResolution>
+	</initialWindow> 
+	<icon> 
+		<image16x16>resources/desktop/p3_logo_16x16.png</image16x16> 
+		<image32x32>resources/desktop/p3_logo_32x32.png</image32x32> 
+		<image48x48>resources/desktop/p3_logo_48x48.png</image48x48> 
+		<image128x128>resources/desktop/p3_logo_128x128.png</image128x128> 
+	</icon> 
+</application>

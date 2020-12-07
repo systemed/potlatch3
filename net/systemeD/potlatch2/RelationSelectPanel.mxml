@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:mx="library://ns.adobe.com/flex/mx"
+    xmlns:potlatch2="net.systemeD.potlatch2.*"
+    title="Select Relation" width="350" height="400"
+    showCloseButton="true" close="PopUpManager.removePopUp(this);">
+
+    <fx:Script><![CDATA[
+        import net.systemeD.halcyon.*;
+        import net.systemeD.halcyon.connection.*;
+        import net.systemeD.potlatch2.*;
+        import mx.managers.PopUpManager;
+        import mx.core.Application;
+        import mx.core.FlexGlobals;
+
+        private var conn:Connection;
+        private var relationList:Array;
+        private var entity:Entity;
+		private var defaulttags:Object;
+
+        /** Initialise panel used to add and remove relations from an entity.
+        *   @param e Entity that is being edited.
+        *   @param t Object containing tag match patterns as properties, for the kind of relation sought.
+        */
+        public function init(e:Entity, t:Object):void {
+          entity = e;
+          conn = e.connection;
+          defaulttags = {};
+          for (var k:String in t) {  
+            //tagmatches[k]=t[k];// deep copy match pattern tags
+            defaulttags[k]=t[k][0];  // route=[hiking,foot] -> route=hiking
+          }	
+          PopUpManager.addPopUp(this, Application(FlexGlobals.topLevelApplication), true);
+          PopUpManager.centerPopUp(this);
+    
+          var titles:Array = [];
+          relationList = conn.getMatchingRelationIDs(t);
+          if (relationList.length == 0) {
+            warning.text = "No relations available";
+          } else {
+            warning.text = "These relations are available:";
+          }
+          //relationSelector.dataProvider = relationList;
+          for each (var id:Number in relationList) {
+            var relation:Relation = conn.getRelation(id);
+            titles.push({label:relation.getDescription(), relId:id});
+          }
+          titles.sortOn('label');
+          titles.forEach(function(item:Object, index:int, arr:Array):void { arr[index].label=item.relId+": "+item.label; });
+          relationSelector.dataProvider = titles;
+        }
+        
+        public function updateEntityAndClose():void {
+			var undo:CompositeUndoableAction = new CompositeUndoableAction("Add to relation");
+			for each (var relObject:Object in relationSelector.selectedItems) {
+				var relation:Relation = conn.getRelation(relObject.relId);
+				if (entity is EntityCollection) {
+					for each (var e:Entity in EntityCollection(entity).entities) {
+						if (relation.findEntityMemberIndex(e)==-1) {
+							relation.appendMember(new RelationMember(e, ''), undo.push);
+						}
+					}
+				} else {
+					relation.appendMember(new RelationMember(entity, ''), undo.push);
+				}
+			}
+			MainUndoStack.getGlobalStack().addAction(undo);
+			PopUpManager.removePopUp(this);
+        }
+        
+        public function closeAndNewRelation():void {
+			var members:Array=[];
+			if (entity is EntityCollection) {
+				for each (var e:Entity in EntityCollection(entity).entities) {
+					members.push(new RelationMember(e, ''));
+				}
+			} else members.push(new RelationMember(entity, ''));
+			var relation:Relation = conn.createRelation(defaulttags, members, MainUndoStack.getGlobalStack().addAction);
+
+			PopUpManager.removePopUp(this);
+			var panel:RelationEditorPanel = RelationEditorPanel(
+			    PopUpManager.createPopUp(Application(FlexGlobals.topLevelApplication), RelationEditorPanel, true));
+			panel.setRelation(relation);
+			PopUpManager.centerPopUp(panel);
+        }
+
+		public function closeAndLoadRelation():void {
+			PopUpManager.removePopUp(this);
+			var panel:RelationLoaderPanel = RelationLoaderPanel(
+			    PopUpManager.createPopUp(Application(FlexGlobals.topLevelApplication), RelationLoaderPanel, true));
+			panel.setEntity(entity);
+			PopUpManager.centerPopUp(panel);
+		}
+		
+		public function updateSelectButton():void {
+			selectButton.enabled=relationSelector.selectedItems.length>0;
+		}
+        
+    ]]></fx:Script>
+    <mx:Text id="warning" text="" />
+    <mx:List width="100%" height="100%" id="relationSelector" change="updateSelectButton();" verticalScrollPolicy="on" allowMultipleSelection="true" > 
+    </mx:List>
+    <mx:ControlBar>
+      <mx:Button label="New Relation..." click="closeAndNewRelation();" styleName="titleWindowButton" />
+      <mx:Button label="Load Relation..." click="closeAndLoadRelation();" styleName="titleWindowButton" />
+      <mx:Spacer width="100%"/>
+      <mx:Button label="Select" id="selectButton" click="updateEntityAndClose();" enabled="false" styleName="titleWindowButton" />
+    </mx:ControlBar>
+</mx:TitleWindow>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edit:SingleTagEditor
+	xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:edit="net.systemeD.potlatch2.mapfeatures.editors.*"
+	helpContent="{fieldDescription ? help : null}" 
+	label="{fieldName}:"
+    styleName="titledEditor">
+
+  <mx:VBox> <!-- This wrapper shouldn't be necessary, but without it the layout goes nuts -->
+    <edit:ChoiceComboBox id="inputBox" dataProvider="{choices}" selectedItem="{selectFromTag}"
+        dropdownFactory="mx.controls.TileList"
+        change="value = inputBox.selectedItem.value"
+        itemRenderer="net.systemeD.potlatch2.mapfeatures.editors.RestrictionRenderer"
+        dropdownWidth="250" rowCount="4"
+        fontWeight="normal">
+    </edit:ChoiceComboBox>
+  </mx:VBox>
+
+  <fx:Script><![CDATA[
+      import mx.collections.*;
+      import mx.utils.*;
+      import net.systemeD.potlatch2.mapfeatures.Feature;
+      
+      private var _choices:ArrayCollection = null;
+      private var _unknownChoice:SpeedChoice = null;
+
+      [Bindable(event="factory_set")]
+      protected function get choices():ArrayCollection {
+          if ( _choices == null ) {
+              _choices = new ArrayCollection();
+              for each(var sp:String in
+                  ["5 mph", "10 mph", "15 mph", "20 mph", "25 mph", "30 mph", "35 mph",
+                   "40 mph", "45 mph", "50 mph", "55 mph", "60 mph", "65 mph", "70 mph", "75 mph",
+                   "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "110", "120", "130"])
+                  _choices.addItem(new SpeedChoice(sp));
+              _choices.addItem(new SpeedChoice(null));
+          }
+          return _choices;
+      }
+      
+      [Bindable(event="tag_changed")]
+      protected function get selectFromTag():Object {
+          if ( _entity == null )
+              return new SpeedChoice(null);
+          
+          var tagValue:String = value;
+          for each(var choice:SpeedChoice in choices) {
+              if ( choice.isTagMatch(tagValue) )
+                  return choice;
+          }
+          
+          // set up the unknown choice
+          if ( _unknownChoice == null ) {
+              _unknownChoice = new SpeedChoice(tagValue);
+              _choices.addItem(_unknownChoice);
+          }
+          _unknownChoice.value = tagValue;
+          
+          return _unknownChoice;
+      }
+      
+      private function createUnsetChoice():Choice {
+          var choice:Choice = new Choice();
+          choice.icon = null;
+          choice.description = "Field not set";
+          choice.label = "<i>Unset</i>";
+          choice.value = null;
+          return choice;
+      }
+  ]]></fx:Script>
+</edit:SingleTagEditor>
+

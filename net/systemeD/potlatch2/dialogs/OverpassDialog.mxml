@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:mx="library://ns.adobe.com/flex/mx"
+    xmlns:potlatch2="net.systemeD.potlatch2.*"
+    title="Overpass API" width="350" height="400"
+    showCloseButton="true" close="saveQuery();PopUpManager.removePopUp(this);">
+
+    <mx:Text id="warning" text="" />
+    <mx:TextArea id="query" width="100%" height="100%" />
+    <mx:ControlBar>
+      <mx:Button label="Help" id="helpButton" click="openHelp();" styleName="titleWindowButton" />
+      <mx:Button label="Insert bbox" id="bboxButton" click="insertBbox();" styleName="titleWindowButton" />
+	  <mx:Text id="radiusPrompt" text="radius" />
+	  <mx:TextInput id="radiusInput" restrict="0-9" text="10" width="40" />
+	  <mx:Text id="kmPrompt" text="km" />
+      <mx:Spacer width="100%"/>
+      <mx:Button label="Run" id="runButton" click="runQuery();" styleName="titleWindowButton" />
+    </mx:ControlBar>
+
+    <fx:Script><![CDATA[
+
+    import mx.managers.PopUpManager;
+    import mx.events.CloseEvent;
+    import mx.core.Application;
+    import mx.core.FlexGlobals;
+	import net.systemeD.potlatch2.EditController;
+    import net.systemeD.halcyon.AttentionEvent;
+    import net.systemeD.halcyon.connection.Connection;
+	import net.systemeD.P3;
+	import flash.events.*;
+	import flash.net.*;
+
+	private var controller:EditController;
+	private static var OVERPASS_API:String = "https://lz4.overpass-api.de/api/interpreter";
+
+	public function init(_controller:EditController):void {
+		controller=_controller;
+		PopUpManager.addPopUp(this, Application(FlexGlobals.topLevelApplication), true);
+		PopUpManager.centerPopUp(this);
+
+		if (SharedObject.getLocal("user_state","/").data["overpass_query"]) {
+			query.text = SharedObject.getLocal("user_state","/").data["overpass_query"];
+		} else {
+			query.text = "[out:json];\n"
+		}
+	}
+
+	public function openHelp():void {}
+
+	public function insertBbox():void {
+		var lon:Number = controller.map.centre_lon;
+		var lat:Number = controller.map.centre_lat;
+		var yr:Number = (Number(radiusInput.text) / 6371) * (180 / Math.PI);
+		var xr:Number = yr / Math.cos(lat * Math.PI/180);
+		var str:String = "" + P3.round(lat-yr,4) + "," + P3.round(lon-xr,4) + "," + P3.round(lat+yr,4) + "," + P3.round(lon+xr,4);
+		var idx:int = query.selectionBeginIndex;
+		query.text = query.text.substr(0,idx) + str + query.text.substr(idx);
+	}
+	
+	public function runQuery():void { 
+		saveQuery(); 
+		P3.fetch(OVERPASS_API,queryReceived,false,query.text);
+		controller.palette.dispatchEvent(new Event(Connection.LOAD_STARTED));
+	}
+	
+	public function queryReceived(data:String, success:Boolean, message:String):void {
+		controller.palette.dispatchEvent(new Event(Connection.LOAD_COMPLETED));
+		if (!success) return;
+		trace(data);
+		try {
+			controller.openPalette();
+			controller.palette.resetTasks();
+			PopUpManager.removePopUp(this);
+			for each (var element:Object in P3.parseJSON(data).elements) {
+				var lat:Number = element.center ? element.center.lat : element.lat;
+				var lon:Number = element.center ? element.center.lon : element.lon;
+				var name:String = (element.tags ? element.tags.name : null) || element.type+" "+element.id;
+				var select:Object = element.id ? { type: element.type, id: element.id } : null;
+				controller.palette.addTask({ lat: lat, lon: lon, text: name, select: select })
+			}
+			controller.palette.updateText();
+		} catch(e:Error) {
+			controller.dispatchEvent(new AttentionEvent(AttentionEvent.ALERT, null, "Couldn't parse returned data"));
+		}
+	}
+
+	public function saveQuery():void { 
+		var obj:SharedObject = SharedObject.getLocal("user_state","/");
+		obj.setProperty("overpass_query",query.text);
+		obj.flush();
+	}
+
+    ]]>
+	</fx:Script>
+
+</mx:TitleWindow>

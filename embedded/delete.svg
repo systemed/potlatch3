@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 11 Build 196, SVG Export Plug-In . SVG Version: 6.0.0 Build 78)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"    "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg  xmlns="&ns_svg;" xmlns:xlink="&ns_xlink;" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+	 width="12.503" height="17.527" viewBox="0 0 12.503 17.527" overflow="visible" enable-background="new 0 0 12.503 17.527"
+	 xml:space="preserve">
+	<g id="Layer_1">
+		<path fill="#404040" d="M12.503,3.764c0-1.338-1.084-2.421-2.42-2.421H2.42C1.084,1.343,0,2.426,0,3.764H12.503z"/>
+		<path fill="#404040" d="M1.21,4.419v10.688c0,1.336,1.083,2.42,2.42,2.42h5.243c1.336,0,2.42-1.084,2.42-2.42V4.419H1.21z"/>
+		<path fill="none" stroke="#404040" stroke-width="0.55" d="M4.375,1.473V1c0-0.4,0.326-0.726,0.727-0.726H7.4
+			c0.4,0,0.726,0.325,0.726,0.726v0.451"/>
+		<line fill="none" stroke="#FFFFFF" stroke-width="1.21" stroke-linecap="round" x1="6.251" y1="6.208" x2="6.251" y2="15.057"/>
+		<line fill="none" stroke="#FFFFFF" stroke-width="1.21" stroke-linecap="round" x1="9.033" y1="6.208" x2="9.033" y2="15.057"/>
+		<line fill="none" stroke="#FFFFFF" stroke-width="1.21" stroke-linecap="round" x1="3.468" y1="6.208" x2="3.468" y2="15.057"/>
+	</g>
+</svg>

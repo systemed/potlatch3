@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	layout="vertical"
+	horizontalAlign="center" title="Sign in to OpenStreetMap"
+	creationComplete="getRequestToken()"
+    width="900" height="700" >
+	
+    <mx:HTML id="oauthHTML" width="100%" height="100%" />
+    <mx:ControlBar>
+		<mx:CheckBox id="rememberMe" label="Remember authorisation" selected="true"/>
+		<mx:Spacer width="100%"/>
+	    <mx:Button id="cancelButton" label="Cancel" click="cancelOAuth()" styleName="titleWindowButton" />
+	    <mx:Button id="tryAccessButton" label="Try Access" click="getAccessToken()" enabled="false" styleName="titleWindowButton" />
+    </mx:ControlBar>
+
+	<fx:Script><![CDATA[
+		import flash.display.InteractiveObject;
+        import flash.events.Event;
+        import flash.net.*;
+		import flash.system.Capabilities;
+		import flash.utils.setTimeout;
+        import mx.managers.PopUpManager;
+        import net.systemeD.halcyon.connection.*;
+        import org.iotashan.oauth.*;
+
+        private var connection:Connection;
+        private var requestToken:OAuthToken;
+        private var _accessToken:OAuthToken;
+        private var authoriseURL:String;
+        private var lastHTTPStatus:int = 0;
+        private var waiting:Boolean = false;
+        private var monitorTimeout:uint;
+		
+        public static var ACCESS_TOKEN_EVENT:String = "gotAccessToken";
+        
+		public function setConnection(connection:Connection):void {
+			this.connection=connection;
+			if (waiting) { waiting=false; getRequestToken(); }
+		}
+
+        private function getRequestToken():void {
+            if (!connection) { waiting=true; return; }	// in case the connection hasn't been set yet
+
+			oauthHTML.htmlLoader.loadString("Waiting for OpenStreetMap...");
+			tryAccessButton.enabled=false;
+			
+            var sig:IOAuthSignatureMethod = new OAuthSignatureMethod_HMAC_SHA1();
+            var consumer:OAuthConsumer = getConsumer();
+            var params:Object = new Object();
+            var oauthRequest:OAuthRequest = new OAuthRequest("GET", "https://www.openstreetmap.org/oauth/request_token",
+				params, consumer, null);
+            var urlStr:Object = oauthRequest.buildRequest(sig, OAuthRequest.RESULT_TYPE_URL_STRING)
+			
+            // build the actual request
+            var urlReq:URLRequest = new URLRequest(String(urlStr));
+            var loader:URLLoader = new URLLoader();
+            loader.addEventListener(Event.COMPLETE, loadedRequestToken);
+            loader.addEventListener(IOErrorEvent.IO_ERROR, requestTokenError);
+            loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, recordStatus);
+            loader.load(urlReq);
+        }
+
+        private function recordStatus(event:HTTPStatusEvent):void {
+            lastHTTPStatus = event.status;
+        }
+        
+        private function requestTokenError(event:IOErrorEvent):void {
+			tryAccessButton.enabled=false;
+            trace("error occured... last status was: "+lastHTTPStatus);
+			if (lastHTTPStatus==401) {
+				oauthHTML.htmlLoader.loadString("Sorry, the OpenStreetMap server refused to authorise Potlatch.");
+            } else {
+				oauthHTML.htmlLoader.loadString("There was a temporary issue connecting to OpenStreetMap. Please try again later.");
+            }
+        }
+        
+        private function loadedRequestToken(event:Event):void {
+            trace("Yay! response: "+URLLoader(event.target).data);
+            requestToken = getResponseToken(URLLoader(event.target));
+			authoriseURL = "https://www.openstreetmap.org/oauth/authorize?oauth_token="+requestToken.key;
+			oauthHTML.htmlLoader.load(new URLRequest(authoriseURL));
+			tryAccessButton.enabled=true;
+			monitorTimeout = setTimeout(monitorForCallback, 100);
+        }
+
+		private function monitorForCallback():void {
+			var loc:String = oauthHTML.htmlLoader.location;
+			if (loc.indexOf("https://www.systemed.net/potlatch/oauth_callback")==0) {
+				getAccessToken();
+			} else if (loc.indexOf("openstreetmap")>-1) {
+				monitorTimeout = setTimeout(monitorForCallback, 100);
+			}
+			// otherwise, if we're not on OSM nor the callback, give up
+		}
+        
+        private function getResponseToken(loader:URLLoader):OAuthToken {
+            var vars:URLVariables = new URLVariables(loader.data);
+            
+            // build out request token
+            var token:OAuthToken = new OAuthToken(
+                String(vars["oauth_token"]),
+                String(vars["oauth_token_secret"]));
+            return token;
+        }
+        
+        private function getAccessToken():void {
+			tryAccessButton.enabled=false;
+			clearTimeout(monitorTimeout);
+            var sig:IOAuthSignatureMethod = new OAuthSignatureMethod_HMAC_SHA1();
+            var consumer:OAuthConsumer = getConsumer();
+            var oauthRequest:OAuthRequest = new OAuthRequest("GET", "https://www.openstreetmap.org/oauth/access_token",
+				null, consumer, requestToken);
+            var urlStr:Object = oauthRequest.buildRequest(sig, OAuthRequest.RESULT_TYPE_URL_STRING)
+
+            var urlReq:URLRequest = new URLRequest(String(urlStr));
+            var loader:URLLoader = new URLLoader();
+            loader.addEventListener(Event.COMPLETE, loadedAccessToken);
+            loader.addEventListener(IOErrorEvent.IO_ERROR, accessTokenError);
+            loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, recordStatus);
+            loader.load(urlReq);
+        }
+        
+        private function loadedAccessToken(event:Event):void {
+			oauthHTML.htmlLoader.loadString("Successfully logged into OpenStreetMap");
+	        trace("Yay! response: "+URLLoader(event.target).data);
+            PopUpManager.removePopUp(this);
+            
+            _accessToken = getResponseToken(URLLoader(event.target));
+            connection.setAuthToken(_accessToken);
+            dispatchEvent(new Event(ACCESS_TOKEN_EVENT));
+        }
+        
+        public function get accessToken():OAuthToken { return _accessToken; } 
+        public function get shouldRemember():Boolean { return rememberMe.selected; }
+        
+		private function cancelOAuth():void {
+			PopUpManager.removePopUp(this);
+			clearTimeout(monitorTimeout);
+		}
+		
+		private function accessTokenError(event:IOErrorEvent):void {
+			tryAccessButton.enabled=false;
+            if ( lastHTTPStatus == 401 ) {
+				oauthHTML.htmlLoader.loadString("Sorry, access was denied. Please check and try again.");
+            } else {
+				oauthHTML.htmlLoader.loadString("Sorry, an error occurred ("+lastHTTPStatus+". Please try again.");
+            }
+        }
+        
+        private function getConsumer():OAuthConsumer {
+            var key:String = connection.getParam("oauth_consumer_key", "");
+            var secret:String = connection.getParam("oauth_consumer_secret", "");
+            return new OAuthConsumer(key, secret);
+        }
+	]]></fx:Script>
+</mx:TitleWindow>
+

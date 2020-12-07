@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Application
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+    xmlns:s="library://ns.adobe.com/flex/spark"
+	xmlns:halcyon="net.systemeD.halcyon.*"
+	xmlns:potlatch2="net.systemeD.potlatch2.*"
+	layout="vertical"
+	horizontalScrollPolicy="off"
+	verticalScrollPolicy="off"
+	horizontalAlign="center" 
+	addedToStage="startInit()" >
+
+
+
+	<fx:Style source="styles/Application.css"/>
+
+    <fx:Declarations>
+        <map:LocalizationMap xmlns:map="l10n.map.*" />
+        <mx:Glow id="glowImage" duration="100"
+            alphaFrom="0.3" alphaTo="1.0"
+            blurXFrom="0.0" blurXTo="5.0"
+            blurYFrom="0.0" blurYTo="5.0"
+            color="0xFF8000"/>
+        <mx:Glow id="unglowImage" duration="100"
+            alphaFrom="1.0" alphaTo="0.3"
+            blurXFrom="5.0" blurXTo="0.0"
+            blurYFrom="5.0" blurYTo="0.0"
+            color="0xFF8000"/>
+        <mx:WipeLeft id="wipeOut" duration="250"/>
+        <mx:WipeRight id="wipeIn" duration="250"/>
+    </fx:Declarations>
+
+    <mx:ApplicationControlBar id="controlbar" dock="true" tabChildren="false" >
+        <mx:Button label="Save" icon="@Embed('embedded/upload.svg')" disabledIcon="@Embed('embedded/upload_disabled.svg')" styleName="appBarButton"
+			click="SaveManager.saveChanges(theMap.editableLayer.connection);" id="saveButton" enabled="false"/>
+        <mx:Button id="helpButton" label="Help" click="new HelpDialog().init();" styleName="appBarButton" />
+        <mx:Spacer width="40"/>
+        <mx:Button id="undo" label="Undo" click="MainUndoStack.getGlobalStack().undo();" styleName="appBarButton"
+            enabled="{MainUndoStack.getGlobalStack().canUndo()}"
+            toolTip="{MainUndoStack.getGlobalStack().getUndoDescription() ? 'Undo '+MainUndoStack.getGlobalStack().getUndoDescription() : 'Undo last action'}" />
+        <mx:Button id="redo" label="Redo" click="MainUndoStack.getGlobalStack().redo();" styleName="appBarButton"
+            enabled="{MainUndoStack.getGlobalStack().canRedo()}"
+            toolTip="{MainUndoStack.getGlobalStack().getRedoDescription() ? 'Redo '+MainUndoStack.getGlobalStack().getRedoDescription() : 'Redo last action'}" />
+        <mx:Spacer width="100%"/>
+        <mx:PopUpButton id="bgButton" label="Background" openAlways="true" styleName="appBarButton" open="disableMapMouse();" close="enableMapMouse();" 
+            creationComplete="bgButton.popUp = new BackgroundSelector();"/>
+        <mx:PopUpButton id="styleButton" label="Map Style" openAlways="true" styleName="appBarButton" open="disableMapMouse();" close="enableMapMouse();" 
+            creationComplete="styleButton.popUp = new StyleSelector();"/>
+		<mx:PopUpMenuButton id="gpsButton" label="GPS" styleName="appBarButton" open="disableMapMouse();" close="enableMapMouse();" 
+		    itemClick="if (event.index==0) { trackLoader.load(); } 
+		          else if (event.index==1) { new MyGpxDialog().init(); } 
+		                              else { mx.controls.Menu(gpsButton.popUp).selectedIndex=0; 
+		    	                             mx.controls.Menu(gpsButton.popUp).selectedIndex=0; /* Yes, we do need to call it twice */
+		    	                             theMap.removeLayerByName('GPS tracks'); }">
+			<mx:dataProvider>
+				<fx:Array>
+					<fx:Object label="GPS data" id="gpsData" />
+					<fx:Object label="My tracks" id="myTracks" />
+					<fx:Object label="Clear" id="clearGps" />
+				</fx:Array>
+			</mx:dataProvider>
+		</mx:PopUpMenuButton>
+        <mx:PopUpButton id="bookmarkButton" label="Bookmarks" openAlways="true" styleName="appBarButton" open="disableMapMouse();" close="enableMapMouse();" 
+            creationComplete="bookmarkButton.popUp = new BookmarkSelector().init();"/>
+        <mx:Button id="tasksButton" label="Tasks" click="new TasksDialog().init(theController);" styleName="appBarButton" toolTip="Load tasks file" />
+        <mx:Button id="optionsButton" label="Options" click="new OptionsDialog().init();" styleName="appBarButton" />
+    </mx:ApplicationControlBar>
+    
+    <mx:HDividedBox width="100%" height="100%">
+
+	  <!-- Tag viewer -->
+	  <potlatch2:TagViewer width="25%" height="100%" id="tagViewer"/>
+
+      <mx:VBox width="75%" height="100%" verticalGap="0" id="rhContent" >
+          <mx:Canvas width="100%" height="100%">
+            <mx:Canvas id="map_area" resize="onResizeMap()"
+                top="0" left="0" width="100%" height="100%" dragEnter="dragEnterHandler(event);" dragDrop="dragDropHandler(event);">
+            </mx:Canvas>
+            <mx:Image source="@Embed('embedded/zoomIn.svg')" left="5" top="5" scaleX="1.5" scaleY="1.5" click="theMap.zoomIn(event.shiftKey ? 3 : 1);"
+                rollOverEffect="glowImage" rollOutEffect="unglowImage" toolTip="{'Zoom in - currently z'+getScale()}" />
+            <mx:Image source="@Embed('embedded/zoomOut.svg')" left="5" top="32" scaleX="1.5" scaleY="1.5" click="theMap.zoomOut(event.shiftKey ? 3 : 1);"
+                rollOverEffect="glowImage" rollOutEffect="unglowImage" toolTip="{'Zoom out - currently z'+getScale()}" />
+            <mx:Image source="@Embed('embedded/search.svg')" left="5" top="62"  scaleX="1.5" scaleY="1.5" click="new FindDialog().init();"
+                rollOverEffect="glowImage" rollOutEffect="unglowImage" toolTip="Find place" />
+            <mx:TextArea id="dataWorking" text="" right="5" top="5" disabledColor="black" backgroundDisabledColor="0xFFFFEA" height="18"
+                enabled="false" borderThickness="0" visible="false"
+                showEffect="{wipeIn}" hideEffect="{wipeOut}"/>
+            <mx:TextArea id="coordsbox" left="25" top="5" disabledColor="black" backgroundDisabledColor="0xFFFFEA" height="33"
+                width="70" enabled="false" borderThickness="0" visible="false"/>
+
+        </mx:Canvas>
+        <potlatch2:ContextualHelp width="100%" height="30" id="contextHelp" />
+    </mx:VBox>
+
+    </mx:HDividedBox>
+
+	<fx:Script><![CDATA[
+		import net.systemeD.halcyon.*;
+		import net.systemeD.halcyon.connection.*;
+		import net.systemeD.potlatch2.*;
+		import net.systemeD.potlatch2.save.SaveManager;
+		import net.systemeD.potlatch2.find.*;
+		import net.systemeD.potlatch2.collections.*;
+		import net.systemeD.potlatch2.controller.*;
+		import net.systemeD.potlatch2.help.*;
+		import net.systemeD.potlatch2.dialogs.*;
+		import net.systemeD.potlatch2.utils.*;
+		import net.systemeD.controls.FloatingAlert;
+		import net.systemeD.controls.Spinner;
+		import mx.managers.PopUpManager;
+		import flash.system.Security;
+		import flash.net.*;
+		import flash.utils.Timer;
+		import flash.events.TimerEvent;
+		import flash.events.MouseEvent;
+		import flash.display.Sprite;
+		import flash.system.LoaderContext;
+		import flash.system.ApplicationDomain;
+		import flash.system.SecurityDomain;
+		import mx.core.IChildList;
+		import mx.containers.Canvas;
+		import mx.controls.SWFLoader;
+		import mx.core.Application;
+		import mx.core.FlexGlobals;
+        import mx.events.DragEvent;
+        import mx.events.CloseEvent;
+        import mx.managers.DragManager;
+        import mx.core.DragSource;
+        import mx.controls.Alert;
+        import org.babelfx.events.LocaleEvent;
+
+        public var theMap:Map;
+        public var theController:EditController;
+		public var trackLoader:TrackLoader;
+		public var toolbox:Toolbox;
+		public var floatingMap:FloatingMap;
+        public var bugLoader:BugLoader;
+        public var bikeShopLoader:BikeShopLoader;
+		public var spinner:Spinner;
+
+		private var savecount:uint=0;
+		private var loadcount:uint=0;
+		private var saveLabel:String='Save';
+		private var saveTimer:Timer;
+		private var mouseTimer:Timer;
+		private var resizeTimer:Timer;
+
+		public var version:String="3.0";
+        include "build_date.as";
+
+		private function startInit():void {
+			var loader:Loader = new Loader();
+			var lc:LoaderContext = new LoaderContext(false, ApplicationDomain.currentDomain);
+			lc.securityDomain = null;
+			lc.allowCodeImport = true;
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, startApp);
+			loader.load(new URLRequest("FontLibrary.swf"),lc);
+
+            if (loaderInfo.parameters['locale'] && loaderInfo.parameters['locale']!='en_US') {
+                // we don't bother with localisation if the user is en_US, as P2 is in English by default
+                Globals.vars.locale = loaderInfo.parameters['locale'];
+                Globals.vars.locale_paths = loaderInfo.parameters['locale_paths'];
+                dispatchEvent(new LocaleEvent(LocaleEvent.LOAD_LOCALE, loaderInfo.parameters['locale']));
+                dispatchEvent(new LocaleEvent(LocaleEvent.LOAD_LOCALE, 'en_US')); // think en_US is default
+                resourceManager.localeChain = [loaderInfo.parameters['locale'], 'en_US'];
+            }
+		}
+		
+		private function startApp(event:Event):void {
+			controlbar.setStyle('dropShadowEnabled',"false");	// Flex 4 doesn't permit this in Application.css
+
+			// Set font
+			var FontLibrary:Class = event.target.applicationDomain.getDefinition("FontLibrary") as Class;
+			Font.registerFont(FontLibrary.DejaVu);
+
+			Globals.vars.map_area = map_area;
+			Globals.vars.root = map_area.rawChildren;			// set up global reference to root level
+			var _root:IChildList = map_area.rawChildren;		// convenient local shorthand
+			Globals.vars.nocache = loaderInfo.parameters['nocache'] == 'true';
+			Globals.vars.flashvars = loaderInfo.parameters;
+
+			// Remember localised Save text, because we change this dynamically
+			saveLabel=saveButton.label;
+
+			// populate sharedObject with loaderInfo parameters if supplied
+			var obj:SharedObject = SharedObject.getLocal("user_state","/");
+			var objChanged:Boolean = false;
+			if (loaderInfo.parameters['tileurl']) {
+				obj.setProperty('background_url',loaderInfo.parameters['tileurl']); 
+				obj.setProperty('background_name','Custom'); 
+				objChanged=true;
+			}
+			if (loaderInfo.parameters['style']) { 
+				obj.setProperty('stylesheet_url',loaderInfo.parameters['style']);
+				obj.setProperty('stylesheet_name','Custom');
+				objChanged=true; 
+			}
+			if (objChanged) { try { obj.flush(); } catch (e:Error) {} }
+
+			// hide contextual help if user preference
+			if (obj.data.hasOwnProperty('hide_context_help') && obj.data['hide_context_help']) {
+				contextHelp.visible = false;
+				contextHelp.height  = 0;
+			}
+
+			// map backdrop object
+            var w:uint = map_area.width;
+            var h:uint = map_area.height;
+            var b:Sprite = new Sprite();
+            b.height=h; b.width=w;
+            b.graphics.beginFill(0xFFFFEA,100); 
+            b.graphics.drawRect(0,0,w,h); 
+            b.graphics.endFill();
+			_root.addChild(b);
+
+			// pass additional parameters to map
+			var k:String;
+			var params:Object = {
+				api: "https://www.openstreetmap.org/api/0.6/",
+				policy: "https://www.openstreetmap.org/api/crossdomain.xml",
+				connection: "XML",
+				oauth_policy: "https://www.openstreetmap.org/oauth/crossdomain.xml",
+				oauth_request_url: "https://www.openstreetmap.org/oauth/request_token",
+				oauth_access_url: "https://www.openstreetmap.org/oauth/access_token",
+				oauth_auth_url: "https://www.openstreetmap.org/oauth/authorize",
+				oauth_consumer_key: "8IJxvRqJ2b2Rgfv6RCf6Sw",
+				oauth_consumer_secret: "Ojod3JTQCPCPOQ3HZNlX5bxiRwLTtyzgcHCiTcyI",
+				lat: 0,
+				lon: 0,
+				zoom: 2,
+				assets: "assets/icons.zip=icons/;assets/features_pois.zip=features/pois/"
+			};
+			for (k in SharedObject.getLocal('user_state',"/").data) {
+				 params[k]=SharedObject.getLocal('user_state',"/").data[k];
+			 }
+
+			// Create map
+			var overlay:Sprite=TileSet.overlaySprite();
+			theMap=new Map(overlay);
+			theMap.backdrop=b;
+            theMap.updateSize(w,h);
+			theMap.addEventListener(MapEvent.SCALE, scaleHandler);
+			_root.addChild(theMap);
+			_root.addChild(overlay);
+
+			// Initialise stylesheets
+			Stylesheets.instance().init();
+			Stylesheets.instance().addEventListener(CollectionEvent.SELECT,
+				function(e:CollectionEvent):void { theMap.editableLayer.setStyle(String(e.data)); }
+			);
+
+			// Add core data layer
+			var conn:Connection = new XMLConnection("Main", params['api'], params['policy'], params);
+            conn.addEventListener(Connection.LOAD_STARTED, onDataStart);
+            conn.addEventListener(Connection.LOAD_COMPLETED, onDataComplete);
+            conn.addEventListener(Connection.SAVE_STARTED, onDataStart);
+            conn.addEventListener(Connection.SAVE_COMPLETED, onDataComplete);
+            conn.addEventListener(Connection.DATA_DIRTY, onDataDirty);
+            conn.addEventListener(Connection.DATA_CLEAN, onDataClean);
+			conn.addEventListener(MapEvent.ERROR, onMapError);
+			conn.addEventListener(AttentionEvent.ATTENTION, onAttention);
+			conn.addEventListener(AttentionEvent.ALERT, onAlert);
+			theMap.addLayer(conn, Stylesheets.instance().selected.url, false, true);
+
+            // Auto-load vector backgrounds from config
+            theMap.addEventListener(MapEvent.INITIALISED, function(e:Event):void { VectorBackgrounds.instance().init(theMap); });
+
+			// Add loading 'spinner' indicator
+			spinner=new Spinner();
+			_root.addChild(spinner);
+			spinner.x=dataWorking.x-20;
+			spinner.y=dataWorking.y+dataWorking.height/2;
+			spinner.stop();
+
+			// Set start position of map
+			// ** FIXME: if lat/lon/zoom aren't supplied, we need to keep the map in a non-loading state 
+			//           until the user has decided where to start editing (e.g. when the first GPX loads)
+			theMap.init(params['lat'], params['lon'], params['zoom']);
+
+			// mouse-up handler attached to stage, so the user can release outside the map
+			stage.addEventListener(MouseEvent.MOUSE_UP, theMap.mouseUpHandler);
+			Globals.vars.map_area.addEventListener(MouseEvent.MOUSE_MOVE, theMap.mouseMoveHandler);
+			Globals.vars.map_area.addEventListener(MouseEvent.MOUSE_DOWN, theMap.mouseDownHandler);
+
+			// initialise imagery
+			theMap.tileset.blocks=[/google\./i];	// hard-coded block on Google tiles
+			theMap.tileset.setDimming(params['background_dim']    ==null ? true  : params['background_dim']);
+			theMap.tileset.setSharpen(params['background_sharpen']==null ? false : params['background_sharpen']);
+			var imagery:Imagery = Imagery.instance();
+			imagery.init();
+			theMap.tileset.init(imagery.selected, imagery.selected != '');
+			imagery.addEventListener(MapEvent.BUMP, bumpHandler);
+			imagery.addEventListener(CollectionEvent.SELECT,
+				function(e:CollectionEvent):void { 
+					theMap.tileset.setBackgroundFromImagery(e.data,false);
+				}
+			);
+			imagery.addEventListener('imageryLoaded',function(e:Event):void {
+				// Tell the function key manager that we'd like to receive function key calls
+				FunctionKeyManager.instance().registerListener('Background imagery',
+					function(o:String):void { theMap.tileset.setBackgroundFromImagery(imagery.findBackgroundWithName(o),true); });
+				dispatchEvent(new Event("collection_changed"));
+			});
+			imagery.addEventListener('refreshAttribution',function(e:Event):void {
+				theMap.tileset.setLogo(); theMap.tileset.setAttribution(); theMap.tileset.setTerms(); 
+			});
+			theMap.addEventListener(MapEvent.JUMP,function(e:MapEvent):void {
+				if (e.params.big) imagery.dispatchEvent(new Event("collection_changed")); // refresh imagery menu now we have a new bbox
+			});
+			
+			// keyboard event attached to stage
+			stage.addEventListener(KeyboardEvent.KEY_UP, theMap.keyUpHandler);
+            
+			// mouse-position listener for co-ordinate display
+            theMap.addEventListener(MapEvent.MOUSE_MOVE, mouseoverHandler);
+
+			// position toolbox
+			toolbox=Toolbox(PopUpManager.createPopUp(this,Toolbox,false));
+			toolbox.init(theController);
+			toolbox.x=suggestToolboxX();
+			toolbox.y=suggestToolboxY();
+			Globals.vars.root=theMap;
+
+			// create controller
+            theController = new EditController(theMap, tagViewer, toolbox);
+            theController.setActive();
+			theController.addEventListener(AttentionEvent.ATTENTION, onAttention);
+			theController.addEventListener(AttentionEvent.ALERT, onAlert);
+			theController.addEventListener(EditController.CHANGED_STATE, onStateChanged);
+
+			// configure tasks palette
+            theController.palette.addEventListener(Connection.LOAD_STARTED, onDataStart);
+            theController.palette.addEventListener(Connection.LOAD_COMPLETED, onDataComplete);
+
+			// add floating map
+			floatingMap=FloatingMap(PopUpManager.createPopUp(this,FloatingMap,false));
+			floatingMap.visible=false;
+			floatingMap.init(theController);
+			floatingMap.x=stage.stageWidth-410;
+			floatingMap.y=36;
+
+            // set the access token from saved cookie
+            var tokenObject:SharedObject = SharedObject.getLocal("access_token","/");
+            conn.setAccessToken(tokenObject.data["oauth_token"], tokenObject.data["oauth_token_secret"]);
+
+            // Load any requested GPX track
+            if (loaderInfo.parameters['gpx']) {
+                var id:Number = loaderInfo.parameters['gpx'];
+                if (conn.hasAccessToken()) { 
+                    loadTrace(id);
+                } else {
+                    SaveManager.ensureAccess(function ():void { loadTrace(id); }, conn);
+                }
+            }
+
+			// Load arbitrary GPX from provided URL
+			if (loaderInfo.parameters['gpx_url']) {
+
+                var gpx_url:String = loaderInfo.parameters['gpx_url'];
+
+                var connection:Connection = new Connection(name, gpx_url, null, null);
+                var gpx:GpxImporter=new GpxImporter(connection, theMap,
+                                                function(connection:Connection,options:Object,success:Boolean,message:String=null):void {
+                                                    if (!success) return;
+                                                    var paint:MapPaint = theMap.addLayer(connection, "stylesheets/gpx.css");
+                                                    paint.updateEntityUIs(false, false);
+                                                    dispatchEvent(new Event("layers_changed"));
+                                                }, false);
+				gpx.importFromRemoteFiles([gpx_url]);
+			}
+
+			// create GPS trackloader
+			trackLoader=new TrackLoader(theMap,conn.apiBase);
+
+            // Force authentication on startup, if required
+            // force_auth == force => checks for access token, and displays OAuth panel if needed
+            var force_auth:String = loaderInfo.parameters["force_auth"];
+            if (!conn.hasAccessToken() && force_auth == 'force') {
+              SaveManager.ensureAccess(onAccessChecked, conn);
+            }
+
+            // show help dialog on startup, if required
+            // show_help == always => on every startup
+            // show_help == once => show on first startup only
+            var show_help:String = loaderInfo.parameters["show_help"];
+
+            if (show_help == 'always' || (show_help == 'once' && obj.data["help_shown"] != "true")) {
+              new HelpDialog().init();
+            }
+
+            // Check if Tiger highlighting should be enabled from saved object
+            Globals.vars.highlightTiger = obj.data['tiger_highlighted'];
+		}
+		
+		public function onMapError(mapEvent:MapEvent):void {
+			var buttons:uint=0;
+			if (mapEvent.params.yes             ) buttons|=mx.controls.Alert.YES;
+			if (mapEvent.params.no              ) buttons|=mx.controls.Alert.NO;
+			if (mapEvent.params.cancel          ) buttons|=mx.controls.Alert.CANCEL;
+			if (mapEvent.params.ok || buttons==0) buttons|=mx.controls.Alert.OK;
+			Alert.show(mapEvent.params.message, 'Error', buttons, null, function(closeEvent:CloseEvent):void { 
+				switch (closeEvent.detail) {
+					case mx.controls.Alert.CANCEL:	mapEvent.params.cancel(); break; //fixme? this gets called if user presses escape, even if there's no cancel button.
+					case mx.controls.Alert.YES:		mapEvent.params.yes(); break;
+					case mx.controls.Alert.NO:		mapEvent.params.no(); break;
+					default:						if (mapEvent.params.ok) mapEvent.params.ok();
+				}
+			});
+		}
+
+		/** Highlight an entity in response to an 'attention' event */
+
+		public function onAttention(event:AttentionEvent):void {
+			var entity:Entity=event.entity;
+			if (entity is Relation) {
+				// If it's a relation, just bring up the editor panel
+				var panel:RelationEditorPanel = RelationEditorPanel(
+					PopUpManager.createPopUp(Application(FlexGlobals.topLevelApplication), RelationEditorPanel, true));
+				panel.setRelation(entity as Relation);
+				PopUpManager.centerPopUp(panel);
+				return;
+			}
+
+			var lat:Number, lon:Number;
+			var panTo:Boolean=true;
+			if (entity is Way) {
+				// If it's a way, find if it's on-screen
+				for (var i:uint=0; i<Way(entity).length; i++) {
+					var node:Node=Way(entity).getNode(i)
+					if (node.within(theMap.edge_l,theMap.edge_r,theMap.edge_t,theMap.edge_b)) { panTo=false; }
+					lat=node.lat; lon=node.lon;
+				}
+			} else if (entity is Node) {
+				// If it's a node, check if it's on-screen
+				if (entity.within(theMap.edge_l,theMap.edge_r,theMap.edge_t,theMap.edge_b)) { panTo=false; }
+				lat=Node(entity).lat; lon=Node(entity).lon;
+			}
+			// Pan if required, and select the object
+			if (panTo) { theMap.moveMapFromLatLon(lat,lon); }
+			theController.setState(theController.findStateForSelection([entity]));
+		}
+
+		/** Display floating warning in response to an 'alert' event */
+
+		public function onAlert(event:AttentionEvent):void {
+			var alert:FloatingAlert=new FloatingAlert(event.message);
+			stage.addChild(alert);
+		}
+
+		/** ControllerState has changed, so update contextual help */
+		
+		public function onStateChanged(event:Event):void {
+			var helpId:String = theController.state.contextualHelpId();
+			contextHelp.selectedChild = contextHelp.hasOwnProperty("context"+helpId) ? contextHelp["context"+helpId] : contextHelp["contextNotFound"];
+		}
+
+        public function onResizeMap():void {
+			if (!theMap) return;
+			theMap.updateSize(map_area.width, map_area.height);
+
+			if (toolbox) {
+				toolbox.x=Math.min(toolbox.x,suggestToolboxX());
+				toolbox.y=Math.min(toolbox.y,suggestToolboxY());
+			}
+
+			if (!resizeTimer) {
+				resizeTimer=new Timer(300);
+				resizeTimer.addEventListener(TimerEvent.TIMER, resizeMapEnd, false, 0, true);
+			}
+			resizeTimer.reset();
+			resizeTimer.start();
+        }
+		private function resizeMapEnd(e:Event):void {
+			resizeTimer.stop();
+			theMap.download();
+		}
+		private function bumpHandler(e:MapEvent):void {
+			if (toolbox) { 
+				toolbox.y=Math.min(toolbox.y,suggestToolboxY(e.params.y+5));
+			}
+		}
+		private function suggestToolboxX():int {
+			var rhCP:Point=rhContent.localToGlobal(new Point(0,0));
+			return rhCP.x + theMap.scrollRect.width - toolbox.width - 5;
+		}
+		private function suggestToolboxY(yOffset:int=0):int {
+			var rhCP:Point=rhContent.localToGlobal(new Point(0,0));	// stage co-ordinates of right-hand content area
+			return rhCP.y + theMap.scrollRect.height - toolbox.height - 5 - yOffset;
+		}
+		public function suggestTasksPaletteX():int {
+			var rhCP:Point=rhContent.localToGlobal(new Point(0,0));
+			return rhCP.x + 5;
+		}
+		public function suggestTasksPaletteY():int {
+			var rhCP:Point=rhContent.localToGlobal(new Point(0,0));
+			return rhCP.y + theMap.scrollRect.height - 55;
+		}
+
+		private function disableMapMouse():void {
+			map_area.mouseChildren=false;
+			map_area.mouseEnabled=false;
+		}
+
+		private function enableMapMouse():void {
+			mouseTimer=new Timer(300);
+			mouseTimer.addEventListener(TimerEvent.TIMER, doEnable, false, 0, true);
+			mouseTimer.start();
+		}
+		
+		private function doEnable(event:Event):void {
+			map_area.mouseChildren=true;
+			map_area.mouseEnabled=true;
+			mouseTimer.removeEventListener(TimerEvent.TIMER, doEnable);
+			mouseTimer=null;
+		}
+
+        private function mouseoverHandler(e:MapEvent):void {
+            if (coordsbox.visible) {
+                coordsbox.text= Number(e.params.x).toFixed(5) + "\n " + Number(e.params.y).toFixed(5); // Not sure if 5 dp's really required.
+            }
+        }
+
+        private function onDataStart(event:Event):void {
+			switch (event.type) {
+				case Connection.LOAD_STARTED:	loadcount++; break;
+				case Connection.SAVE_STARTED:	savecount++; break;
+			}
+			updateDataWorking();
+        }
+        private function onDataComplete(event:Event):void {
+			switch (event.type) {
+				case Connection.LOAD_COMPLETED:	loadcount--; break;
+				case Connection.SAVE_COMPLETED:	savecount--; break;
+			}
+            updateDataWorking();
+        }
+		private function updateDataWorking():void {
+			var t:String;
+			if (loadcount>0 && savecount>0) { t="Loading/saving#..."; }
+			else if (loadcount>0)           { t="Loading data#..."; }
+			else if (savecount>0)           { t="Saving data..."; }
+			else                            { t=""; }
+			dataWorking.text=t.replace("#",(loadcount>1) ? (" ("+loadcount+")") : "");
+
+			var previousState:Boolean=dataWorking.visible;
+			var newState:Boolean=(dataWorking.text!="");
+			if (!previousState && newState) spinner.start();
+			if (!newState) spinner.stop();
+			dataWorking.visible=newState;
+		}
+        private function onDataDirty(event:Event):void {
+			saveButton.enabled=true;
+			if (!saveTimer || !saveTimer.running) {
+				saveTimer=new Timer(60*1000,0);
+				saveTimer.addEventListener(TimerEvent.TIMER,saveTimeUpdate);
+				saveTimer.start();
+			}
+		}
+		private function onDataClean(event:Event):void {
+			saveButton.enabled=false;
+            if (saveTimer && saveTimer.running) {
+				saveTimer.stop();
+				saveTimer.removeEventListener(TimerEvent.TIMER,saveTimeUpdate);
+				saveTimeWrite(0);
+			}
+		}
+		private function saveTimeUpdate(event:TimerEvent):void {
+			var timer:Timer=Timer(event.target);
+			saveTimeWrite(uint(timer.delay*timer.currentCount/1000/60));
+		}
+		private function saveTimeWrite(minutes:uint):void {
+			if (minutes<5) {
+				saveButton.label=saveLabel;
+			} else {
+				saveButton.label=saveLabel+" ("+minutes+"m"+")"; 
+				if (minutes>=20 && minutes/5==int(minutes/5)) {
+					theController.dispatchEvent(new AttentionEvent(AttentionEvent.ALERT, null, minutes+"m since last save - please save regularly"));
+				}
+			}
+		}
+
+		private function scaleHandler(event:MapEvent):void {
+			dispatchEvent(new Event("rescale"));
+		}
+		
+		[Bindable(event="rescale")]
+		private function getScale():String {
+			return String(theMap.scale);
+		}
+
+        private function dragEnterHandler(event:DragEvent):void {
+            // Get the drop target component from the event object.
+            var dropTarget:Canvas=event.currentTarget as Canvas;
+            // Accept the drag only if the user is dragging poi with tags
+            if (event.dragSource.hasFormat('tags') && theMap.isEditable) 
+            {
+                DragManager.acceptDragDrop(dropTarget);
+            }
+        }
+        
+        private function dragDropHandler(event:DragEvent):void {
+			// Deselect the dragged icon
+			if (event.dragSource.dataForFormat('container')) {
+				event.dragSource.dataForFormat('container').selectedItem=-1;
+			}
+
+			// Get the tags
+            var tags:Array = event.dragSource.dataForFormat('tags') as Array;
+
+            // If you dnd quick enough, this exposes a flex bug and event.stageX/Y become negative.
+            // Take the mouse positions from a displayObject's stage for consistent results.
+            var mapLoc:Point = Globals.vars.root.globalToLocal(new Point(event.target.stage.mouseX, event.target.stage.mouseY));
+            var lat:Number = Globals.vars.root.coord2lat(mapLoc.y);
+            var lon:Number = Globals.vars.root.coord2lon(mapLoc.x);
+            
+            var createAction:CompositeUndoableAction = new CompositeUndoableAction("Create POI");
+            
+			var conn:Connection = theMap.editableLayer.connection;
+            var node:Node = conn.createNode({}, lat, lon, createAction.push);
+            for each ( var tag:Object in tags ) {
+                node.setTag(tag.k, tag.v, createAction.push);
+            }
+			conn.registerPOI(node);
+			MainUndoStack.getGlobalStack().addAction(createAction);
+            theController.setState(new SelectedPOINode(node));
+        }
+
+        /* Called when forcing an initial access token check. */
+        private function onAccessChecked():void {
+            // Floaty panel message "You now have access";
+        }
+
+        private function loadTrace(id:Number):void {
+			var conn:Connection = theMap.editableLayer.connection;
+			conn.addEventListener(Connection.TRACES_LOADED, function (e:Event):void {
+				var t:Trace = conn.findTrace(id);
+				if (!t) { t=new Trace(conn,id); conn.addTrace(t); }
+				t.addToMap();
+				conn.removeEventListener(Connection.TRACES_LOADED, arguments.callee);
+			});
+			conn.fetchUserTraces();
+        }
+
+	]]></fx:Script>
+
+</mx:Application>
+

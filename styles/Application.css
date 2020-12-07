@@ -1,0 +1,346 @@
+@namespace mx "library://ns.adobe.com/flex/mx";
+@namespace s "library://ns.adobe.com/flex/spark";
+@namespace p2 "net.systemeD.potlatch2.*";
+
+
+/* General Flex UI elements */
+
+mx|TitleWindow {
+	borderAlpha: 1;
+	borderThicknessLeft: 5;
+	borderThicknessRight: 5;
+	cornerRadius: 0px;
+	borderColor: #6495ED;
+	titleStyleName: "titleHeader";
+}
+
+.titleHeader { font-size: 14; font-weight: bold; color: white; }
+
+.titleWindowButton { 
+	fontFamily: Arial;
+	fontSize: 11;
+	fontWeight: bold;
+	cornerRadius: 2px;
+	paddingLeft: 5;
+	paddingRight: 5;
+	highlightAlphas: 0, 0;
+	fillAlphas: 1,1;
+	fillColors: white, white;
+	color: black;
+	borderColor: haloBlue;
+}
+
+mx|Button {
+	color: black;
+	textRollOverColor: black;
+}
+
+mx|VScrollBar {
+	cornerRadius: 0;
+	highlightAlphas: 0, 0;
+	fillAlphas: 0, 0, 0, 0;
+	fillColors: white, white, white, white;
+	trackColors: #eeeeee, #eeeeee;
+	borderColor: #999999;
+	thumbOffset: 1;
+}
+
+mx|CheckBox, mx|List, p2|BookmarkSelector, p2|StyleSelector, p2|BackgroundSelector { color: black; textAlign: left; }
+
+mx|TabNavigator {
+	horizontalGap: 3;
+}
+
+mx|TextInput {
+	color: #333333;
+}
+
+mx|Label {
+	fontWeight: normal;
+}
+
+mx|PopUpButton {
+	openDuration: 0;
+	closeDuration: 0;
+}
+
+s|FormItem s|Label#labelDisplay {
+    textAlign: right;
+}
+
+s|DropDownList s|Label#labelDisplay {
+    textAlign: left;
+}
+
+s|FormHeading {
+	fontSize: 12;
+}
+
+/* Main window */
+
+mx|Application {
+	padding-left: 4;
+	padding-right: 4;
+	padding-top: 2;
+	padding-bottom: 4;
+	backgroundColor: #6495ED;
+	themeColor: #0000ff;
+	borderStyle: none;
+	fontFamily: Arial;
+	fontLookup: device;
+}
+
+mx|HDividedBox {
+	dividerAlpha: 1;
+	dividerColor: #0000ff;
+	backgroundColor: #6495ED;
+	dividerAffordance: 6;
+	horizontalGap: 6;
+/*   backgroundColor: #ffff99; */
+}
+
+mx|ApplicationControlBar {
+	padding-top: 2;
+	padding-bottom: 0;
+	padding-left: 4;
+	padding-right: 4;
+	highlightAlphas: 0, 0;
+	fillAlphas: 1,1;
+	fillColors: haloBlue, #6495ED;
+	/*fillColors: #ffffcc, #ffff99;*/
+	/*backgroundColor: #ffffcc;*/
+	/*dropShadowEnabled: false;*/
+	/*borderSkin: ClassReference("mx.skins.halo.ApplicationBackground");*/
+}
+
+.appBarButton {
+	fontFamily: Arial;
+	fontSize: 11;
+	fontWeight: bold;
+	cornerRadius: 2px;
+	paddingLeft: 5;
+	paddingRight: 5;
+	highlightAlphas: 0, 0;
+	fillAlphas: 1,1;
+	fillColors: haloBlue,#77AAF4;
+	color: white;
+	textRollOverColor: white;
+	disabledColor: #5555bb;
+	borderColor: haloBlue;
+}
+
+/* General text classes */
+
+.failText { color: red; }
+.warningText { color: #ff4500; }
+.promptText { fontStyle: italic; }
+
+.titledEditor {
+	verticalGap: 0;
+	verticalAlign: middle;
+	horizontalGap: 3;
+}
+
+/* Drag-and-drop panel */
+
+.dndPanelTileList {
+	borderColor: #dddddd;
+	backgroundColor: white;
+}
+
+.dndEditorContainer {
+	verticalGap: 4;
+	paddingTop: 3;
+	paddingLeft: 3;
+	paddingRight: 3;
+	backgroundColor: white;
+	color: #333333;
+	fontSize: 11;
+	fontWeight: bold;
+}
+
+.dndPanelVbox {
+	paddingRight: 3;
+	paddingLeft: 3;
+	paddingTop: 5;
+	verticalGap: 0;
+	backgroundColor: #dddddd;
+	borderColor: #aaaaaa;
+	fontWeight: normal;
+}
+
+.catToggleButtonBar {
+	themeColor: #0000ff;
+	buttonStyleName: "mytoggleButtonBarButtonStyle";
+}
+
+.mytoggleButtonBarButtonStyle { fillColors: #dddddd, #eeeeee, #eeeeee, #eeeeee; borderColor: white; }
+
+.catToggleTiles {
+	themeColor: #cccccc;
+}
+
+/* Drag-and-drop POI icons */
+
+.helpInfo {
+	paddingLeft: 0;
+	paddingRight: 0;
+	paddingBottom: 6;
+}
+.dndRepeater {
+}
+.dndPanelCategory {
+	paddingTop: 1;
+	paddingLeft: 2;
+	paddingRight: 2;
+
+	backgroundColor: #6495ED;
+	color: white;
+}
+.dndPanelCategoryLabel {
+	paddingTop: 0;
+	color: white;
+	fontSize: 11;
+	fontWeight: bold;
+}
+
+/* Simple tag view - form */
+
+s|Form {
+	skinClass: ClassReference("net.systemeD.potlatch2.skins.CustomFormSkin");
+}
+s|FormItem {
+	skinClass: ClassReference("net.systemeD.potlatch2.skins.CustomFormItemSkin");
+}
+
+/* Simple tag view - header */
+
+.dndTagHeader {
+	paddingBottom: 15;
+}
+
+.featureSelector {
+	paddingTop: 0;
+	paddingLeft: 3;
+	paddingRight: 3;
+	paddingBottom: 7;
+}
+
+.dndTagPopUpMenu {
+	fillColors: white, white, white, white;
+	borderColor: #aaaaaa;
+	fontSize: 11;
+	fontWeight: bold;
+}
+
+.dndIconText {
+	color: black;
+	fontSize: 14;
+	fontWeight: bold;
+}
+
+/* Simple tag view - editor container */
+
+.dndStackTab {
+	backgroundColor: white;
+	themeColor: #bbbbbb;
+	cornerRadius: 0;
+	color: #333333;
+	borderColor: #999999;
+	tabStyleName: "myTabs";
+	firstTabStyleName: "myTabs";
+	lastTabStyleName: "myTabs";
+	selectedTabTextStyleName: "mySelectedTabs";
+}
+
+.myTabs { font-size: 11; font-weight: normal; cornerRadius: 0; fillColors: white, white; borderColor: #999999; themeColor: #999999; }
+.mySelectedTabs { fillColors: white, white; }
+
+.dndStackAccordion {
+	themeColor: #bbbbbb;
+	cornerRadius: 0;
+	borderColor: #999999;
+	headerStyleName: "accordionHeader";
+}
+
+.accordionHeader { fillColors: #888888, #999999; fillAlphas: 1,1; color: white; fontWeight: bold; fontSize: 11; }
+
+/* Simple tag view - panels for subcategories */
+
+.subcategoryPanel {
+	borderThicknessLeft: 1;
+	borderThicknessTop: 1;
+	borderThicknessBottom: 1;
+	borderThicknessRight: 1;
+	borderColor: gray;
+	borderAlpha: 1;
+	dropShadowEnabled: false;
+
+	backgroundColor: gray;
+	backgroundAlpha: 0.2;
+
+	headerHeight: 20;
+	headerColors: #d9d9d9, #ffffff;
+
+	paddingTop: 4;
+	paddingLeft: 4;
+	paddingRight: 4;
+	paddingBottom: 4;
+	verticalGap: 4;
+
+	openIcon: Embed(source="../embedded/CollapsiblePanelAssets.swf", symbol="CollapseButtonDown");
+	closedIcon: Embed(source="../embedded/CollapsiblePanelAssets.swf", symbol="CollapseButtonOver");
+}
+
+/* Tag tooltips */
+
+.errorTip {
+    borderColor: #2929CE;
+}
+
+/* Toolbox */
+
+.tasksPalette,.theToolBox {
+	headerColors: haloBlue, #6495ED;
+	headerAlphas: 1,1;
+	headerHeight: 6;
+	borderThicknessRight: 0; borderThicknessLeft: 0; borderThicknessBottom: 0;
+	paddingLeft: 4; paddingTop: 4;
+}
+
+.mypanelTitle { textAlign: center; color: #333333; fontSize: 10; fontWeight: bold; }
+
+/* Help */
+
+.helpHeaderText {
+	fontWeight: bold;
+	fontSize: 12pt;
+	textAlign: right;
+}
+
+.helpPageHeader {
+	fontWeight: bold;
+	fontSize: 13pt;
+}
+
+.helpTN {
+	cornerRadius: 0px;
+	tabOffset: 10px;
+}
+
+.contextualHelp {
+	backgroundColor: #71A2FA;
+	color: white;
+	borderThickness: 0;
+	fontSize: 12pt;
+	textAlign: center;
+}
+
+/* Don't appear to be used */
+
+.header {
+	fillColors: haloSilver, x222222;
+	fillAlphas: 0, 0;
+	selectedFillColors: haloBlue, black;
+	color: white;
+}

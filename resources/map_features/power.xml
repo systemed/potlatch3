@@ -1,0 +1,84 @@
+<featureGroup>
+  <feature name="High-voltage line">
+    <category>power</category>
+    <icon image="features/power_high.png"/>
+    <line/>
+    <tag k="power" v="line"/>
+    <inputSet ref="powerCables"/>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="Low-voltage line">
+    <category>power</category>
+    <icon image="features/power_low.png"/>
+    <line/>
+    <tag k="power" v="minor_line"/>
+    <inputSet ref="powerCables"/>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="High-voltage pylon">
+    <category>power</category>
+    <icon image="features/pois/power_tower_high2.n.24.png"/>
+    <point/>
+    <tag k="power" v="tower"/>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="Power pole">
+    <category>power</category>
+    <icon image="features/pois/power_tower_low.n.24.png"/>
+    <point/>
+    <tag k="power" v="pole"/>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="Plant (station)">
+    <category>power</category>
+    <icon image="features/pois/power_station.png"/>
+    <area/>
+    <point/>
+    <tag k="power" v="generator"/>
+    <inputSet ref="names"/>
+    <input type="choice" presence="always" name="Energy source" key="generator:source" category="Details">
+      <choice value="solar" text="Solar"/>
+      <choice value="wind" text="Wind"/>
+      <choice value="hydro" text="Hydroelectric"/>
+      <choice value="oil" text="Oil"/>
+      <choice value="gas" text="Gas"/>
+      <choice value="coal" text="Coal"/>
+      <choice value="biomass" text="Biomass"/>
+      <choice value="biogas" text="Biogas"/>
+      <choice value="nuclear" text="Nuclear"/>
+      <choice value="fossil" text="Unspecified fossil fuel"/>
+      <choice value="geothermal" text="Geothermal"/>
+    </input>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="Substation">
+    <category>power</category>
+    <icon image="features/pois/power_substation.n.24.png"/>
+    <help>https://wiki.openstreetmap.org/wiki/Tag:power%3Dsubstation</help>
+    <area/>
+    <point/>
+    <tag k="power" v="substation"/>
+    <inputSet ref="common"/>
+  </feature>
+
+
+  <feature name="Transformer">
+    <category>power</category>
+    <icon image="features/pois/power_transformer.n.24.png"/>
+    <help>https://wiki.openstreetmap.org/wiki/Tag:power%3Dtransformer</help>
+    <area/>
+    <point/>
+    <tag k="power" v="transformer"/>
+    <inputSet ref="common"/>
+  </feature>
+</featureGroup>

@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	layout="vertical"
+	horizontalAlign="center" title="Save Changes"
+	width="350" height="330" verticalGap="0">
+
+  <fx:Declarations>
+  <mx:ArrayCollection id="changesetTags">
+    <fx:Object k="created_by" v="Potlatch"/>
+    <fx:Object k="version" v="{application.version}"/>
+    <fx:Object k="build" v="{application.build_number}"/>
+    <fx:Object k="os" v="{Capabilities.os}"/>
+  </mx:ArrayCollection>
+  </fx:Declarations>
+  
+  <mx:ViewStack id="processSequence" width="100%" height="100%" 
+      creationPolicy="all" creationComplete="if (doSkip) skipInput() else comment.setFocus()">
+  
+    <!-- section for entering tags -->
+    <mx:VBox width="100%" height="100%" verticalGap="0">
+      <mx:ViewStack id="tagStack" width="100%" height="100%">
+        <mx:VBox width="100%" height="100%" label="Simple">
+          <mx:Text id="editDescription" width="100%">
+            <mx:text>
+               Please enter a description of your edits. This will be used to give other
+               mappers an idea of what changes you are making.
+            </mx:text>
+          </mx:Text>
+          <mx:HBox width="100%">
+            <mx:Image data="@Embed('../../../../embedded/read_this.png')" />
+            <mx:Text id="databaseWarning" width="100%">
+              <mx:text>
+                 Your changes are saved to the main OpenStreetMap database for everyone to 
+                 see. This is not your own private map. Please don&apos;t save test changes 
+                 or edits for personal use only.
+              </mx:text>
+            </mx:Text>
+          </mx:HBox>
+          <mx:Label id="commentLabel" text="Comment:"/>
+          <mx:TextArea id="comment" maxChars="255" width="100%" height="100%" change="commentChanged(event);" textInput="monitorEnter(event);" />
+        </mx:VBox>
+        
+        <mx:VBox width="100%" height="100%" label="Advanced">
+          <mx:Label text="Changeset tags:"/>
+          <mx:DataGrid editable="true" width="100%" id="advancedTagGrid"
+              dataProvider="{changesetTags}"
+              itemEditBeginning="allowForEdit(event)"
+              itemEditEnd="verifyInput(event)">
+            <mx:columns>
+                <mx:DataGridColumn editable="true" dataField="k" headerText="Key">
+                    <mx:itemEditor><fx:Component><mx:TextInput restrict="&#x0020;-&#x10FFFF;" /></fx:Component></mx:itemEditor>
+                </mx:DataGridColumn>
+                <mx:DataGridColumn editable="true" dataField="v" headerText="Value">
+                    <mx:itemEditor><fx:Component><mx:TextInput restrict="&#x0020;-&#x10FFFF;" /></fx:Component></mx:itemEditor>
+                </mx:DataGridColumn>
+            </mx:columns>
+          </mx:DataGrid>        
+		  <mx:HBox horizontalAlign="right" width="100%">
+		    <mx:LinkButton label="Delete" click="removeTag()" enabled="{advancedTagGrid.selectedItem != null? true : false}"/>
+		    <mx:LinkButton label="Add" click="addNewTag()"/>
+		  </mx:HBox>
+		  <mx:HRule width="100%" />
+        </mx:VBox>
+      </mx:ViewStack>
+      <mx:LinkBar dataProvider="{tagStack}"/>
+    </mx:VBox>
+    
+    <mx:VBox width="100%" height="100%" id="createChangesetTab">
+      <mx:VBox width="100%" height="100%" id="infoBox"/>
+      <mx:Spacer height="100%"/>
+      <mx:ProgressBar label="Creating changeset" labelPlacement="bottom" width="100%"
+          indeterminate="true" id="saveProgress"/>
+    </mx:VBox>
+    
+    <mx:VBox width="100%" height="100%" id="failureTab">
+      <mx:Text width="100%" styleName="failText" text="{failureText}"/>
+    </mx:VBox>
+
+    <mx:VBox width="100%" height="100%" id="dataTab">
+      <mx:TextArea width="100%" height="100%" id="dataText"/>
+    </mx:VBox>
+
+  </mx:ViewStack>
+
+  <mx:ControlBar>
+    <mx:Button id="dataButton" label="View data" visible="false" click="processSequence.selectedChild=dataTab" styleName="titleWindowButton" />
+    <mx:Spacer width="100%"/>
+    <mx:Button id="cancelButton" label="Cancel" click="close();" styleName="titleWindowButton" />
+    <mx:Button id="saveButton" label="Save >" click="startSave();" styleName="titleWindowButton" />
+  </mx:ControlBar>
+  
+  <fx:Script><![CDATA[
+  
+    import mx.controls.*;
+    import mx.managers.PopUpManager;
+	import mx.core.Application;
+	import mx.core.FlexGlobals;
+    import mx.events.DataGridEvent;
+    import mx.events.DataGridEventReason;
+	import flash.system.Capabilities;
+    import flash.net.*;
+
+    import net.systemeD.halcyon.connection.*;
+    import net.systemeD.halcyon.AttentionEvent;
+    
+    private var _connection:Connection;
+	private var doSkip:Boolean = false;
+    private var newChangeset:Boolean = true;
+
+    [Bindable] private var failureText:String = "";
+	[Bindable] private var application:Object = FlexGlobals.topLevelApplication;
+
+	public function setConnection(connection:Connection):void {
+		_connection=connection;
+		newChangeset=true;
+	}
+
+	public function dontPrompt():void {
+		newChangeset=false;
+		if (processSequence.initialized) { skipInput(); } else { doSkip=true; }
+	}
+
+	private function skipInput():void {
+       	processSequence.selectedChild = createChangesetTab;
+		saveButton.enabled = false;
+		changesetCreated();
+	}
+
+	private function commentChanged(event:Event):void {
+		for (var i:int=changesetTags.length-1; i>0; i--) {
+			if (changesetTags[i]['k']=='comment') { changesetTags.removeItemAt(i); }
+		}
+		if (event.target.text!='') changesetTags.addItem( { k:'comment', v: event.target.text } );
+    }
+
+	private function monitorEnter(event:TextEvent):void {
+		if (event.text=="\n") { event.preventDefault(); startSave(); }
+	}
+
+	private function addNewTag():void {
+		changesetTags.addItem( { k:'(new key)', v:'(new value)' } );
+		advancedTagGrid.editedItemPosition = { rowIndex: changesetTags.length-1, columnIndex: 0 };
+	}
+
+	private function removeTag():void {
+		changesetTags.removeItemAt(advancedTagGrid.selectedIndex);
+	}
+    
+    private function startSave():void {
+    
+        // move to next sequence
+        processSequence.selectedChild = createChangesetTab;
+        saveButton.enabled = false;
+        
+        var tags:Object = new Object();
+        for each (var tag:Object in changesetTags) {
+           tags[tag['k']] = tag['v'];
+        }
+        
+        // add the listeners
+        _connection.addEventListener(Connection.NEW_CHANGESET, changesetCreated);
+        _connection.addEventListener(Connection.NEW_CHANGESET_ERROR, changesetError);
+        _connection.createChangeset(tags);
+    }
+
+    private function allowForEdit(event:DataGridEvent):void {
+        /* check before editing the tag grid that it's neither created_by nor version tags */
+        var item:Object = ((event.currentTarget as DataGrid).dataProvider as ArrayCollection)[event.rowIndex];
+        if(item.k == 'created_by' || item.k == 'version' || item.k == 'build') {
+          event.preventDefault();
+        }
+    }
+
+    private function verifyInput(event:DataGridEvent):void {
+        /* check before saving any change that the new key isn't created_by nor version */
+        // it is OK if the user cancels the edit
+        if( event.reason == DataGridEventReason.CANCELLED ) return;
+
+        var editor:TextInput = (event.currentTarget as DataGrid).itemEditorInstance as TextInput;
+
+        if( event.dataField == "k" ) {
+          if( editor.text == 'created_by' || editor.text == 'version' || editor.text == 'build') {
+            event.preventDefault();
+          }
+        }
+    }
+
+    private function changesetCreated(event:EntityEvent=null):void {
+        var changeset:Changeset = _connection.getActiveChangeset();
+        addStatus("Saving to changeset "+changeset.id);
+        
+        saveProgress.label = "Uploading changes";
+        _connection.addEventListener(Connection.SAVE_COMPLETED, saveCompleted);
+        var rawData:*=_connection.uploadChanges();
+        if (rawData) {
+            dataText.text=rawData.toString();
+            dataButton.visible=true;
+        }
+    }
+    
+    private function changesetError(event:Event):void {
+        fail("Error creating changeset");
+    }
+    
+    private function saveCompleted(event:SaveCompleteEvent):void {
+        if ( event.saveOK ) {
+			_connection.dispatchEvent(new AttentionEvent(AttentionEvent.ALERT, null, "Changes successfully saved"));
+            if (processSequence.selectedChild!=dataTab) close();
+        } else {
+            fail("Failure when uploading data");
+		}
+        if (saveButton && saveButton.parent) saveButton.parent.removeChild(saveButton);
+        cancelButton.label = "Close";
+    }
+    
+    private function addStatus(text:String):void {
+        var label:Text = new Text();
+        label.text = text;
+        
+        infoBox.addChild(label);
+    }
+    
+    private function fail(text:String):void {
+        processSequence.selectedChild = failureTab;
+        failureText = text;
+    }
+
+    private function close():void {
+        _connection.removeEventListener(Connection.NEW_CHANGESET, changesetCreated);
+        _connection.removeEventListener(Connection.NEW_CHANGESET_ERROR, changesetError);
+        _connection.removeEventListener(Connection.SAVE_COMPLETED, saveCompleted);
+        PopUpManager.removePopUp(this);
+    }
+
+  ]]></fx:Script>
+</mx:TitleWindow>
+

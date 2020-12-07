@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+	Advanced tag grid
+-->
+
+<mx:DataGrid editable="true" doubleClickEnabled="true" doubleClick="addNewTag(event)" sortableColumns="false"
+	variableRowHeight="true"
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:controls="net.systemeD.controls.*"
+	xmlns:mx="library://ns.adobe.com/flex/mx">
+	<mx:columns>
+
+		<!-- Key -->
+
+		<mx:DataGridColumn editable="true" dataField="key" headerText="Key">
+			<mx:itemEditor>
+				<fx:Component>
+					<controls:AutoComplete
+						dataProvider="{MapFeatures.getInstance().getAutoCompleteKeys(outerDocument.getEntityType())}"
+						labelField="name"
+						rowCount="10"
+						restrict="&#x0020;-&#x10FFFF;"
+						maxChars="255" 
+						typedText="{outerDocument.selectedItem.key}">
+					<fx:Script><![CDATA[ import net.systemeD.potlatch2.mapfeatures.*; ]]></fx:Script>
+					</controls:AutoComplete>
+				</fx:Component>
+			</mx:itemEditor>
+		</mx:DataGridColumn>
+
+		<!-- Value -->
+
+		<mx:DataGridColumn wordWrap="true" editable="true" dataField="value" headerText="Value" itemRenderer="net.systemeD.controls.DataGridWarningField" >
+			<mx:itemEditor>
+				<fx:Component>
+					<controls:AutoComplete
+						dataProvider="{MapFeatures.getInstance().getAutoCompleteValues(outerDocument.getEntityType(),outerDocument.selectedItem.key)}"
+						labelField="name"
+						rowCount="10"
+						restrict="&#x0020;-&#x10FFFF;"
+						maxChars="255" 
+						typedText="{outerDocument.selectedItem.value}">
+					<fx:Script><![CDATA[ import net.systemeD.potlatch2.mapfeatures.*; ]]></fx:Script>
+					</controls:AutoComplete>
+				</fx:Component>
+			</mx:itemEditor>
+		</mx:DataGridColumn>
+
+		<!-- Delete button -->
+
+		<mx:DataGridColumn width="20" editable="false">
+			<mx:itemRenderer>
+				<fx:Component>
+                    <mx:HBox horizontalAlign="center" verticalAlign="top">
+                      <mx:Image source="@Embed('../../../embedded/delete_small.svg')"
+                          click='event.stopPropagation();outerDocument.removeTag();'
+                          buttonMode="true" useHandCursor="true" width="12" height="12">
+                      </mx:Image>
+					</mx:HBox>
+				</fx:Component>
+			</mx:itemRenderer>
+		</mx:DataGridColumn>
+	</mx:columns>
+
+	<fx:Script><![CDATA[
+
+		import net.systemeD.halcyon.connection.*;
+		import mx.collections.*;
+		import mx.utils.StringUtil;
+
+		private var selectedEntity:Entity;
+		private var tagDataProvider:ArrayCollection;
+
+		/** Assign a new selected Entity, and update editing controls appropriately. */
+		public function init(entity:Entity):void {
+			if (selectedEntity==entity) return;
+			if (selectedEntity) selectedEntity.removeEventListener(Connection.TAG_CHANGED, tagChanged);
+
+			selectedEntity=entity;
+			if (!selectedEntity) return;
+			selectedEntity.addEventListener(Connection.TAG_CHANGED, tagChanged, false, 0, true);
+
+			if ( tagDataProvider == null ) {
+				tagDataProvider = new ArrayCollection();
+				dataProvider = tagDataProvider;
+			} else {
+				tagDataProvider.removeAll();
+			}
+
+			var tags:Array = selectedEntity.getTagArray();
+			tags.sortOn("key");
+			for each(var tag:Tag in tags) { tagDataProvider.addItem(tag); }
+		}
+
+		/** Update dataProvider in response to a tag being edited or removed */
+		private function tagChanged(event:TagEvent):void {
+			if (event.key==event.oldKey && event.oldValue==event.newValue) return;
+			var set:Boolean=false;
+			for (var i:uint=0; i<tagDataProvider.length; i++) {
+				if (tagDataProvider[i].key==event.oldKey || tagDataProvider[i].key==event.key) {
+					if (event.newValue && event.key) {
+						if (!set) {
+							// this entry in the dataProvider has changed
+							tagDataProvider[i].key = StringUtil.trim(event.key);
+							tagDataProvider[i].value = StringUtil.trim(event.newValue);
+							set=true;
+						} else {
+							// trap duplicate tags
+							tagDataProvider.removeItemAt(i);
+						}
+					} else {
+						// this entry in the dataProvider has been deleted
+						tagDataProvider.removeItemAt(i);
+					}
+				}
+			}
+			if (!set && event.newValue) tagDataProvider.addItem(new Tag(event.entity,event.key,event.newValue));
+
+			// tell Flex to redraw the grid because we've changed a tag
+			invalidateList();
+		}
+
+		/** Create editing controls for a new key/value pair, with default values. */
+		public function addNewTag(event:Event=null):void {
+			if (event && event.target is TextField) return;
+			var newKey:String = "(new tag)";
+			var newTag:Tag = new Tag(selectedEntity, newKey, "(new value)");
+			tagDataProvider.addItem(newTag);
+			editedItemPosition = {rowIndex: tagDataProvider.getItemIndex(newTag), columnIndex: 0};
+		}
+
+		/** Remove the selected tag from the selected entity. */
+		public function removeTag():void {
+			var k:String = selectedItem.key;
+			if (selectedEntity.getTag(k)) {
+				// genuinely a tag on the Entity, so remove it
+				selectedEntity.setTag(k, null, MainUndoStack.getGlobalStack().addAction);
+			} else {
+				// a "(new key)=(new value)" pair, which is in the dataProvider but not the Entity
+				for (var i:uint=0; i<tagDataProvider.length; i++) {
+					if (tagDataProvider[i].key==k) {
+						tagDataProvider.removeItemAt(i);
+						return;
+					}
+				}
+			}
+		}
+
+		/** Return the type ("node", "way", "relation") of the selected entity. */
+		public function getEntityType():String {
+			return selectedEntity.getType();
+		}
+
+	]]></fx:Script>
+</mx:DataGrid>

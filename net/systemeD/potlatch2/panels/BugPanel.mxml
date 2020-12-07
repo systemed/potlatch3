@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Bug Panel
+-->
+
+<mx:VBox
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:mx="library://ns.adobe.com/flex/mx"
+    height="100%"
+    paddingTop="10">
+  <mx:HBox>
+    <mx:Image source="{bugImage}" width="32" height="32" />
+    <mx:Text text="{bugTitle}" fontWeight="bold" fontSize="18" />
+  </mx:HBox>
+  <mx:HBox>
+    <mx:Text text="Created: " />
+    <mx:Text text="{bugCreated.toLocaleString()}" />
+  </mx:HBox>
+  <mx:HBox>
+    <mx:Text text="Updated:" />
+    <mx:Text text="{bugUpdated.toLocaleString()}" />
+  </mx:HBox>
+  <mx:HBox>
+    <mx:Text text="Type of bug: " />
+    <mx:Text text="{bugType}" fontWeight="bold"/>
+  </mx:HBox>
+  <mx:HBox id="bugDetailsHbox" visible="false">
+    <mx:Text fontWeight="bold" text="View full details on website..." click="navigateToURL(new URLRequest(bugDetails), 'potlatch_browse')" />
+  </mx:HBox>
+  <mx:TextArea editable="false" text="{bugDescription}" width="100%" fontSize="14" minHeight="100" maxHeight="400"/>
+
+  <mx:ViewStack id="bugControlStack" resizeToContent="true" width="100%">
+    <mx:HBox id="bugFixed" backgroundColor="#ddffdd" width="100%">
+      <mx:Text text="This bug has been marked as Fixed" width="100%"/>
+    </mx:HBox>
+
+    <mx:HBox id="bugInvalid" backgroundColor="#dddddd" width="100%">
+      <mx:Text text="This bug has been marked as Invalid" width="100%"/>
+    </mx:HBox>
+
+    <mx:HBox id="bugControl" horizontalAlign="right" width="100%">
+      <mx:LinkButton label="Add Comment" enabled="false" />
+      <mx:LinkButton label="Close Bug" click="bugControlStack.selectedChild=closeBugVBox;" />
+    </mx:HBox>
+
+    <mx:VBox id="closeBugVBox" visible="false">
+      <mx:Text><mx:text>Add your comment and close the bug</mx:text></mx:Text>
+      <mx:Label><mx:text>Your NickName (3-16 chars):</mx:text></mx:Label>
+      <mx:TextInput id="nickName" restrict="a-zA-Z0-9.\-_" width="100%"/>
+      <mx:Text><mx:text>Comment:</mx:text></mx:Text>
+      <mx:TextArea id="closeComment" width="100%"/>
+      <mx:Text text="Mark bug as:"/>
+      <mx:RadioButton groupName="status" id="option_fixed" label="Fixed" selected="true"/>
+      <mx:RadioButton groupName="status" id="option_invalid" label="Invalid" />
+      <mx:HBox horizontalAlign="right" width="100%">
+          <mx:LinkButton label="Cancel" click="bugControlStack.selectedChild=bugControl;" />
+          <mx:LinkButton label="Close Bug" click="closeBug()" />
+      </mx:HBox>
+    </mx:VBox>
+  </mx:ViewStack>
+
+  <fx:Script><![CDATA[
+
+      import net.systemeD.halcyon.connection.*;
+      import net.systemeD.potlatch2.BugConnection;
+      import mx.collections.*;
+      import com.adobe.utils.DateUtil;
+
+      private var selectedEntity:Entity;
+      private var connection:BugConnection;
+
+      [Bindable] private var bugId:String;
+      [Bindable] private var bugStatus:String;
+      [Bindable] private var bugDescription:String;
+      [Bindable] private var bugType:String;
+      [Bindable] private var bugImage:String;
+      [Bindable] private var bugTitle:String;
+      [Bindable] private var bugCreated:Date;
+      [Bindable] private var bugUpdated:Date;
+      [Bindable] private var bugDetails:String;
+
+      public function init(entity:Entity, connection:BugConnection):void {
+            this.connection = connection;
+            selectedEntity=entity;
+
+            bugId = selectedEntity.getTag("bug_id");
+            bugTitle = "Bug "+bugId;
+            bugStatus = selectedEntity.getTag("status");
+            bugDescription = selectedEntity.getTag("description");
+            bugType = selectedEntity.getTag("type").replace(/_/g, " ");
+            bugImage = 'features/bugs/'+bugStatus+'.png';
+            bugCreated = DateUtil.parseW3CDTF(selectedEntity.getTag("date_created"));
+            bugUpdated = DateUtil.parseW3CDTF(selectedEntity.getTag("date_updated"));
+
+            if ( bugStatus == BugConnection.status[int(BugConnection.BUG_STATUS_FIXED)] ) {
+              bugControlStack.selectedChild = bugFixed;
+            } else if ( bugStatus == BugConnection.status[int(BugConnection.BUG_STATUS_INVALID)] ) {
+              bugControlStack.selectedChild = bugInvalid;
+            } else {
+              bugControlStack.selectedChild = bugControl;
+            }
+
+            var u:String = connection.bugDetailsUrl(Marker(selectedEntity));
+            if (u) {
+              bugDetails = u;
+              bugDetailsHbox.visible=true;
+            }
+      }
+
+      private function closeBug():void {
+            var status:String = option_invalid.selected ? BugConnection.BUG_STATUS_INVALID : BugConnection.BUG_STATUS_FIXED;
+            trace(status);
+            connection.closeBug(selectedEntity as Marker, nickName.text, closeComment.text, status);
+            bugStatus = selectedEntity.getTag("status");
+            // this should really be a 'saving...' state, with a callback depending on the server result
+            bugControlStack.selectedChild = option_invalid.selected ? bugInvalid : bugFixed;
+      }
+
+      ]]>
+  </fx:Script>
+</mx:VBox>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+    Marker Panel
+-->
+
+<mx:VBox
+    xmlns:fx="http://ns.adobe.com/mxml/2009"
+    xmlns:mx="library://ns.adobe.com/flex/mx"
+    height="100%">
+  <mx:Text id="markerPanelText" text="You have selected a marker." width="100%" styleName="helpInfo" />
+  <mx:DataGrid editable="false" id="markerPanelDG" width="100%" height="50%">
+    <mx:columns>
+      <mx:DataGridColumn editable="false" dataField="key" headerText="key" />
+      <mx:DataGridColumn editable="false" dataField="value" headerText="value" />
+    </mx:columns>
+  </mx:DataGrid>
+  <fx:Script><![CDATA[
+
+      import net.systemeD.halcyon.connection.*;
+      import net.systemeD.halcyon.MapPaint;
+      import mx.collections.*;
+
+      private var selectedEntity:Entity;
+      private var tagDataProvider:ArrayCollection;
+      private var layer:MapPaint;
+
+      public function init(entity:Entity, layer:MapPaint):void {
+            this.layer = layer;
+            if ( tagDataProvider == null ) {
+                tagDataProvider = new ArrayCollection();
+                markerPanelDG.dataProvider = tagDataProvider;
+            }
+
+            selectedEntity=entity;
+            updateTagDataProvider();
+      }
+
+      private function updateTagDataProvider():void {
+            tagDataProvider.removeAll();
+            if (selectedEntity==null) { return; }
+            var tags:Array = selectedEntity.getTagArray();
+            tags.sortOn("key");
+            for each(var tag:Tag in tags) { tagDataProvider.addItem(tag); }
+      }
+      ]]>
+  </fx:Script>
+</mx:VBox>

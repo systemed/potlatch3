@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edit:RelationMemberEditor
+	xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+    xmlns:s="library://ns.adobe.com/flex/spark"
+	xmlns:edit="net.systemeD.potlatch2.mapfeatures.editors.*"
+	xmlns:flexlib="flexlib.controls.*"
+	verticalGap="0"
+	width="100%"
+	toolTip="{fieldDescription}"
+	label="{fieldName}:"
+	initialize="addTurnRestrictions()">
+
+    <mx:VBox verticalGap="0" width="100%" id="turnRestrictionIcons"/>
+    <mx:LinkButton label="Add new turn restriction" click="addNewTurnRestriction()" />
+
+  <fx:Script><![CDATA[
+	import net.systemeD.halcyon.connection.*;
+	import net.systemeD.potlatch2.*;
+	import mx.core.*;
+
+	/* ** FIXME: some of this is common with RouteEditor.mxml. We can probably refactor */
+
+	public function addTurnRestrictions(event:Event=null):void {
+		turnRestrictionIcons.removeAllChildren();
+		addEventListener("relations_changed", addTurnRestrictions);
+		for each(var relation:Object in matchedRelations) {
+			var icon:TurnRestrictionIcon = new TurnRestrictionIcon();
+			icon.setTurnRestriction(relation);
+			turnRestrictionIcons.addChild(icon);
+		}
+	}
+
+	public function addNewTurnRestriction():void {
+		var relation:Relation = _entity.connection.createRelation(
+			{ type: 'restriction' }, 
+			[ new RelationMember(_entity, 'via') ],
+            MainUndoStack.getGlobalStack().addAction);
+		addTurnRestrictions();
+	}
+	
+  ]]></fx:Script>
+</edit:RelationMemberEditor>
+

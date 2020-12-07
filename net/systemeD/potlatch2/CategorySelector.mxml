@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox
+	xmlns:fx="http://ns.adobe.com/mxml/2009"
+	xmlns:mx="library://ns.adobe.com/flex/mx"
+	xmlns:halcyon="net.systemeD.halcyon.*"
+	backgroundColor="white" borderStyle="inset">
+
+  <mx:HBox horizontalGap="0">
+  <mx:ToggleButtonBar height="100%" dataProvider="{categoryStack}" direction="vertical" styleName="catToggleButtonBar"/>
+  <mx:ViewStack id="categoryStack" width="100%" height="100%"
+      change="_formerIndex=event.newIndex;"
+      creationComplete="setSelectedFeature(_selectedType);">
+      <mx:Repeater id="catRep" dataProvider="{MapFeatures.getInstance().getCategoriesForType(limit)}">
+          <mx:VBox label="{catRep.currentItem.name}">
+          <mx:TileList dataProvider="{catRep.currentItem.getFeaturesForType(limit)}"
+                       width="420" height="100%" change="itemSelected(event);" styleName="catToggleTiles"
+                       creationComplete="ensureSelection();">
+              <mx:itemRenderer>
+                  <fx:Component>
+                      <mx:VBox width="100" height="75"
+                          horizontalScrollPolicy="off" verticalScrollPolicy="off"
+                          horizontalAlign="center" verticalGap="0" toolTip="{data.description}">
+                          <mx:Image source="{data.image}" height="100%" verticalAlign="middle"/>
+                          <mx:Text text="{data.name}"/>
+                      </mx:VBox>
+                  </fx:Component>
+              </mx:itemRenderer>
+          </mx:TileList>
+          </mx:VBox>
+      </mx:Repeater>
+  </mx:ViewStack>
+  </mx:HBox>
+
+  <!-- mx:Label id="hoverInfo" text="Hover Info goes here"/>-->
+  <fx:Script><![CDATA[
+
+
+      import net.systemeD.halcyon.connection.*;
+      import net.systemeD.potlatch2.mapfeatures.*;
+
+      import mx.controls.*;
+      import mx.containers.*;
+      import mx.events.IndexChangedEvent;
+
+      /** Set briefly by ensureSelection() (presumably to avoid an event race condition). */
+      private var settingSelection:Boolean = false;
+      private var _selectedType:Feature;
+      private var _limit:String;
+      private var _formerIndex:int=0;
+
+      public var allowControllerKeyboardEvents:Boolean = true;
+
+      [Bindable(event="selectedType")]
+      /** The Feature type (eg, "residential road") currently selected. */
+      public function get selectedType():Feature {
+          return _selectedType;
+      }
+
+      [Bindable(event="limitChanged")]
+      /** The type of features currently shown ("area", "node"...) */
+      public function get limit():String {
+          return _limit;
+      }
+
+      /** Determine which feature was clicked on, and set that as the currently selected type. */
+      private function itemSelected(event:Event):void {
+          _selectedType = Feature(TileList(event.currentTarget).selectedItem);
+          if ( !settingSelection )
+              dispatchEvent(new Event("selectedType"));
+      }
+
+      /** Set the current type of Features that will be shown ("area", "node"... )*/
+      public function setLimitTypes(type:String):void {
+          _limit = type;
+          dispatchEvent(new Event("limitChanged"));
+      }
+
+      /**
+       * Set the selected feature displayed in the selector.
+       *
+       * The tab is switched to the first category the feature
+       * is part of.
+       *
+       * @param feature The feature to make selected.
+       */
+      public function setSelectedFeature(feature:Feature):void {
+          _selectedType = feature;
+
+          // check whether stack built yet, if not we get called again when it's made
+          if ( categoryStack == null )
+              return;
+
+          // set the tab to the selected item's category
+          // (we have to manually fire the IndexChangedEvent because Flex's ViewStack.as isn't competent
+          //  enough to do it reliably. This is basically a direct crib from dispatchChangeEvent)
+          var index:int=0;
+          if ( feature != null ) {
+              var primaryCategory:Category = feature.findFirstCategory();
+              index = MapFeatures.getInstance().getCategoriesForType(limit).indexOf(primaryCategory);
+              if (index==-1) { index=0; }	// not found, so just show the default for now
+          }
+          var event:IndexChangedEvent = new IndexChangedEvent(IndexChangedEvent.CHANGE);
+          event.oldIndex = _formerIndex;
+          event.newIndex = index;
+          event.relatedObject = categoryStack.getChildAt(index);
+          categoryStack.selectedIndex = index;
+          categoryStack.dispatchEvent(event);
+          _formerIndex=index;
+
+          // finalise the item selection
+          ensureSelection();
+      }
+      public function setNoSelectedFeature():void {
+	    /*_selectedType=null;*/
+	    setSelectedFeature(null);
+	  }
+
+      /**
+       * Sets the selected feature on each category page to the current
+       * value of _selectedType. If there is no selected feature then all
+       * panels selection will be blanked.
+       *
+       * This function does not change the selected category tab.
+       *
+       * Called both from setSelectedFeature, and category tab completion
+       * (so that newly created tabs work as expected)
+       */
+      private function ensureSelection():void {
+          settingSelection = true;
+          for (var i:Number = 0; i < categoryStack.numChildren; i++) {
+              var box:Box = Box(categoryStack.getChildAt(i));
+              if ( box == null || box.numChildren == 0 )
+                  continue;
+              var tileList:TileList = TileList(box.getChildAt(0));
+              var category:Category = Category(tileList.getRepeaterItem());
+              var selected:Boolean = false;
+              for each( var catFeature:Feature in category.features ) {
+                  if ( catFeature == _selectedType ) {
+                      tileList.selectedItem = _selectedType;
+                      selected = true;
+                  }
+              }
+              if ( !selected )
+                  tileList.selectedItem = null;
+          }
+          settingSelection = false;
+      }
+
+  ]]></fx:Script>
+</mx:VBox>
+

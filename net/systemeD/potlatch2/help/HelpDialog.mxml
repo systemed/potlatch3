@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow
+        xmlns:fx="http://ns.adobe.com/mxml/2009"
+        xmlns:mx="library://ns.adobe.com/flex/mx"
+        xmlns:help="net.systemeD.potlatch2.help.*"
+        layout="vertical" showCloseButton="true"
+        horizontalAlign="center" title="{getTitleText()}"
+        width="660" height="500"
+        verticalGap="0">
+  <fx:Script><![CDATA[
+    import mx.managers.PopUpManager;
+    import mx.events.CloseEvent;
+    import mx.core.Application;
+    import mx.core.FlexGlobals;
+    import net.systemeD.halcyon.Globals;
+	import flash.net.URLRequest;
+
+	[Bindable] private var application:Object = FlexGlobals.topLevelApplication;
+	[Bindable] private var locale:String = Globals.vars.locale;
+
+    /** Pops up a multi-tabbed help window in the middle of the screen, then remembers that the user has seen it. */
+    public function init():void {
+        PopUpManager.addPopUp(this, Application(application), true);
+        PopUpManager.centerPopUp(this);
+        this.addEventListener(CloseEvent.CLOSE, helpDialog_close);
+
+        // store whether the user has seen the help dialog before
+        var obj:SharedObject = SharedObject.getLocal("user_state","/");
+        obj.setProperty("help_shown","true");
+
+        ss.parseCSS(hoverStyles);
+		helpHTML.htmlLoader.load(new URLRequest("https://www.systemed.net/potlatch/help/index.html"));
+    }
+
+    // Styling the text within an mx:Text can't be done with the Flex style system. Instead the flash.text styleSheet system must be used
+    // and the stylesheet applied to each mx:Text that requires it after its been initialized
+    private var hoverStyles:String = "a:hover { color: #0000ff; text-decoration: underline; } a { color: #0000aa; text-decoration: underline; }";
+    private var ss:StyleSheet = new StyleSheet();
+
+    private function helpDialog_close(evt:CloseEvent):void {
+        PopUpManager.removePopUp(this);
+    }
+
+    private function getTitleText():String {
+        var site_name:String = loaderInfo.parameters["site_name"];
+        if (site_name) {
+          return "Welcome to Potlatch2 for " + site_name;
+        }
+        return "Welcome to Potlatch2";
+    }
+
+    private function getIntroText():String {
+		return "<p><b>Potlatch 2</b> is an intermediate-level OpenStreetMap (OSM) editor.</p>";
+    }
+
+    private function getSaveText():String {
+        var site_name:String = loaderInfo.parameters["site_name"];
+        if (site_name) {
+          return "<p>If you feel confident with your edits, hit save to publish to <a href=\"https://www.openstreetmap.org\" target=\"_blank\">https://www.openstreetmap.org</a>. Most edits take a few hours to show up on OSM and subsequently on " + site_name + ".</p>";
+        }
+        return "<p>If you feel confident with your edits, hit save to publish to <a href=\"https://www.openstreetmap.org\" target=\"_blank\">https://www.openstreetmap.org</a>. Most edits take a few hours to show up on OSM.</p>"
+    }
+
+  ]]>
+  </fx:Script>
+
+  <mx:HTML id="helpHTML" width="100%" height="100%" />
+
+  <mx:ControlBar>
+    <mx:VBox>
+      <mx:Label text="Version: {application.version} Build: {application.build_date}" />
+      <mx:Label text="Locale: {locale}" />
+    </mx:VBox>
+    <mx:Spacer width="100%"/>
+    <mx:Button label="Ok" click="PopUpManager.removePopUp(this);" styleName="titleWindowButton" />
+  </mx:ControlBar>
+
+</mx:TitleWindow>
