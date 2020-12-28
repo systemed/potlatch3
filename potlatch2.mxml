@@ -218,12 +218,7 @@
 			var k:String;
 			var params:Object = {
 				api: "https://www.openstreetmap.org/api/0.6/",
-				policy: "https://www.openstreetmap.org/api/crossdomain.xml",
 				connection: "XML",
-				oauth_policy: "https://www.openstreetmap.org/oauth/crossdomain.xml",
-				oauth_request_url: "https://www.openstreetmap.org/oauth/request_token",
-				oauth_access_url: "https://www.openstreetmap.org/oauth/access_token",
-				oauth_auth_url: "https://www.openstreetmap.org/oauth/authorize",
 				oauth_consumer_key: "8IJxvRqJ2b2Rgfv6RCf6Sw",
 				oauth_consumer_secret: "Ojod3JTQCPCPOQ3HZNlX5bxiRwLTtyzgcHCiTcyI",
 				lat: 0,
@@ -251,7 +246,7 @@
 			);
 
 			// Add core data layer
-			var conn:Connection = new XMLConnection("Main", params['api'], params['policy'], params);
+			var conn:Connection = new XMLConnection("Main", params['api'], params);
             conn.addEventListener(Connection.LOAD_STARTED, onDataStart);
             conn.addEventListener(Connection.LOAD_COMPLETED, onDataComplete);
             conn.addEventListener(Connection.SAVE_STARTED, onDataStart);

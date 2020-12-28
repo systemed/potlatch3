@@ -6,38 +6,66 @@
         title="Options"
         width="350" height="300">
 
-    <s:layout>
-      <s:VerticalLayout
-          paddingLeft="5" paddingRight="5"
-          paddingTop="5" paddingBottom="5" />
-    </s:layout>
+	<mx:TabNavigator id = "tabNavigator" width = "100%" height = "100%" left="5" top="5" change="selectTab(event)">
+		<s:NavigatorContent label = "Editing" width = "100%" height = "100%">
 
-	<s:CheckBox width="100%" label="Show toolbox" selected="true" id="tbcheck"
-	    change="FlexGlobals.topLevelApplication.toolbox.toggle()" />
+		    <s:layout>
+		      <s:VerticalLayout
+		          paddingLeft="5" paddingRight="5"
+		          paddingTop="5" paddingBottom="5" />
+		    </s:layout>
 
-	<s:CheckBox width="100%" label="Use custom cursors" selected="true" id="cursorcheck"
-	    change="FlexGlobals.topLevelApplication.theController.cursorsEnabled=cursorcheck.selected" />
+			<s:CheckBox width="100%" label="Show toolbox" selected="true" id="tbcheck"
+			    change="FlexGlobals.topLevelApplication.toolbox.toggle()" />
 
-    <s:CheckBox width="100%" label="Highlight unedited TIGER (US roads)" selected="false" id="tigercheck"
-        change="tigerToggle()" />
+			<s:CheckBox width="100%" label="Use custom cursors" selected="true" id="cursorcheck"
+			    change="FlexGlobals.topLevelApplication.theController.cursorsEnabled=cursorcheck.selected" />
 
-    <s:CheckBox width="100%" label="Show contextual help" selected="true" id="contextcheck"
-        change="contextToggle()" />
+		    <s:CheckBox width="100%" label="Highlight unedited TIGER (US roads)" selected="false" id="tigercheck"
+		        change="tigerToggle()" />
 
-	<s:CheckBox width="100%" label="Show mouse latitude/longitude" selected="false" id="latlongcheck"
-		change="FlexGlobals.topLevelApplication.coordsbox.visible=latlongcheck.selected" />
+		    <s:CheckBox width="100%" label="Show contextual help" selected="true" id="contextcheck"
+		        change="contextToggle()" />
 
-	<s:HGroup width="100%" verticalAlign="middle">
-      <s:Label text="Simplify accuracy: "/>
-      <mx:HSlider id="simplifyslider"
-		minimum="1" maximum="5"
-		dataTipPlacement="top" tickColor="black" labels="[High,Low]"
-		snapInterval="1" tickInterval="1"
-		allowTrackClick="true" liveDragging="true"
-		change="simplifySet();"/>
-	</s:HGroup>
+			<s:CheckBox width="100%" label="Show mouse latitude/longitude" selected="false" id="latlongcheck"
+				change="FlexGlobals.topLevelApplication.coordsbox.visible=latlongcheck.selected" />
 
-    <s:Button id="logout" label="Log out of OpenStreetMap" click="doLogout();" styleName="titleWindowButton" />
+			<s:HGroup width="100%" verticalAlign="middle">
+		      <s:Label text="Simplify accuracy: "/>
+		      <mx:HSlider id="simplifyslider"
+				minimum="1" maximum="5"
+				dataTipPlacement="top" tickColor="black" labels="[High,Low]"
+				snapInterval="1" tickInterval="1"
+				allowTrackClick="true" liveDragging="true"
+				change="simplifySet();"/>
+			</s:HGroup>
+
+		</s:NavigatorContent>
+		
+		<s:NavigatorContent label = "Connection" width = "100%" height = "100%">
+
+		    <s:layout>
+		      <s:VerticalLayout paddingLeft="5" paddingRight="5" paddingTop="5" paddingBottom="5" />
+		    </s:layout>
+
+			<s:HGroup width="100%" verticalAlign="middle">
+		      <s:Label text="Map data server: "/>
+			  <s:TextInput id="dataServer" change="dataServerSet()" width="100%" />
+			</s:HGroup>
+			<s:HGroup width="100%" verticalAlign="middle">
+		      <s:Label text="OAuth consumer token: "/>
+			  <s:TextInput id="oauthToken" change="oauthTokenSet()" width="100%" />
+			</s:HGroup>
+			<s:HGroup width="100%" verticalAlign="middle">
+		      <s:Label text="OAuth consumer secret: "/>
+			  <s:TextInput id="oauthSecret" change="oauthSecretSet()" width="100%" />
+			</s:HGroup>
+
+			<mx:Text width="100%" text="The above settings are for using servers other than OpenStreetMap. After changing them, quit Potlatch and reopen it." />
+
+		    <s:Button id="logout" label="Log out" click="doLogout();" styleName="titleWindowButton" />
+		</s:NavigatorContent>
+	</mx:TabNavigator>
 
     <s:controlBarContent>
       <s:Button id="ok" label="OK" click="PopUpManager.removePopUp(this);" styleName="titleWindowButton" />
@@ -54,19 +82,21 @@
     import mx.events.CloseEvent;
     import mx.core.Application;
     import mx.core.FlexGlobals;
+	import mx.events.IndexChangedEvent;
     import net.systemeD.halcyon.Globals;
     import net.systemeD.halcyon.Map;
     import net.systemeD.halcyon.connection.Connection;
+    import net.systemeD.halcyon.connection.XMLConnection;
     import net.systemeD.halcyon.connection.StatusFetcher;
 
 	private var userState:SharedObject=SharedObject.getLocal("user_state","/");
-    
+    private var connTabInited:Boolean = false;
+
     public function init():void {
         PopUpManager.addPopUp(this, Application(FlexGlobals.topLevelApplication), true);
         PopUpManager.centerPopUp(this);
         this.addEventListener(CloseEvent.CLOSE, optionsDialog_close);
 
-		logout.enabled = FlexGlobals.topLevelApplication.theMap.editableLayer.connection.hasAccessToken();
         tbcheck.selected = FlexGlobals.topLevelApplication.toolbox.visible;
         cursorcheck.selected = FlexGlobals.topLevelApplication.theController.cursorsEnabled;
         tigercheck.selected = userState.data['tiger_highlighted'];
@@ -74,7 +104,19 @@
 		contextcheck.selected = FlexGlobals.topLevelApplication.contextHelp.visible;
 		simplifyslider.value = userState.data['simplify_tolerance'] ? userState.data['simplify_tolerance']/0.00001 : 5;
     }
-    
+
+	private function selectTab(event:IndexChangedEvent):void {
+		// we only initialise the connection tab contents when it's clicked on
+		if (event.newIndex==1 && !connTabInited) {
+			dataServer.text = FlexGlobals.topLevelApplication.theMap.editableLayer.connection.apiBase;
+			logout.enabled = FlexGlobals.topLevelApplication.theMap.editableLayer.connection.hasAccessToken();
+			connTabInited = true;
+		}
+	}
+
+	private function get conn():XMLConnection { return XMLConnection(FlexGlobals.topLevelApplication.theMap.editableLayer.connection); }
+	private function flush():void { try { userState.flush(); } catch (e:Error) {} }
+
     private function optionsDialog_close(evt:CloseEvent):void {
         PopUpManager.removePopUp(this);
     }
@@ -84,27 +126,39 @@
         FlexGlobals.topLevelApplication.theMap.redraw();
 
         userState.setProperty("tiger_highlighted",tigercheck.selected);
-        try { userState.flush(); } catch (e:Error) {}
+        flush();
     }
 
 	private function contextToggle():void {
 		FlexGlobals.topLevelApplication.contextHelp.visible = contextcheck.selected;
 		FlexGlobals.topLevelApplication.contextHelp.height  = contextcheck.selected ? 30 : 0;
 		userState.setProperty("hide_context_help",!contextcheck.selected);
-		try { userState.flush(); } catch (e:Error) {}
+        flush();
 	}
 
 	private function simplifySet():void {
         userState.setProperty("simplify_tolerance",simplifyslider.value*0.00001);
-        try { userState.flush(); } catch (e:Error) {}
+        flush();
 	}
 	
 	private function doLogout():void {
-		var conn:Connection = FlexGlobals.topLevelApplication.theMap.editableLayer.connection;
 		conn.deleteAuthToken();
 		logout.enabled = false;
 	}
 	
+	private function dataServerSet():void {
+		conn.apiBase = dataServer.text;
+        userState.setProperty("api",dataServer.text); flush();
+	}
+	private function oauthTokenSet():void {
+		userState.setProperty("oauth_consumer_key",oauthToken.text); flush();
+		conn.deleteAuthToken();
+	}
+	private function oauthSecretSet():void {
+		userState.setProperty("oauth_consumer_secret",oauthToken.text); flush();
+		conn.deleteAuthToken();
+	}
+
 ]]>
   </fx:Script>
 </s:TitleWindow>

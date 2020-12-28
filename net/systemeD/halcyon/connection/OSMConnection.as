@@ -44,10 +44,9 @@ package net.systemeD.halcyon.connection {
 
 		private static const FILENAME:RegExp=/([\-\d\.]+)_([\-\d\.]+)_([\-\d\.]+)_([\-\d\.]+)\./i;
 
-		public function OSMConnection(name:String,api:String,policy:String,initparams:Object) {
+		public function OSMConnection(name:String,api:String,initparams:Object) {
 
-			super(name,api,policy,initparams);
-			if (policyURL!='') Security.loadPolicyFile(policyURL);
+			super(name,api,initparams);
 
             tileResolution = Number(getParam("tile_resolution", "0.2"));
 

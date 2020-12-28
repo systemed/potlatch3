@@ -32,7 +32,7 @@ package net.systemeD.potlatch2.utils {
             this.map = map;
             this.bikeShopBaseURL = url;
             this.name = name;
-            this.connection = new BikeShopConnection(name,url,bikeShopBaseURL+"crossdomain.xml",null);
+            this.connection = new BikeShopConnection(name,url,null);
             _layer = map.addLayer(connection, STYLESHEET);
             _layer.visible = false;
         }

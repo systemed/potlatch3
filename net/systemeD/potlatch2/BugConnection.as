@@ -66,10 +66,6 @@ package net.systemeD.potlatch2 {
 
         public override function loadBbox(left:Number, right:Number,
                                 top:Number, bottom:Number):void {
-
-            // Should be guarded against multiple calls really.
-            if (policyURL != "") { Security.loadPolicyFile(policyURL); }
-
             var loader:URLLoader = new URLLoader();
             loader.addEventListener(Event.COMPLETE, parseLoadedJSON);
             loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, handleError);

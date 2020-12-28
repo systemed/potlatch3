@@ -8,15 +8,11 @@ package net.systemeD.potlatch2.utils {
 
     public class BikeShopConnection extends Connection {
 
-        public function BikeShopConnection(cname:String,api:String,policy:String,initparams:Object=null) {
-            super(cname,api,policy,initparams);
+        public function BikeShopConnection(cname:String,api:String,initparams:Object=null) {
+            super(cname,api,initparams);
         }
 
         public override function loadBbox(left:Number, right:Number, top:Number, bottom:Number):void {
-
-            // Should be guarded against multiple calls really.
-            if (policyURL != "") { Security.loadPolicyFile(policyURL); }
-
             var loader:URLLoader = new URLLoader();
             loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, balls);
             loader.addEventListener(Event.COMPLETE, parseKML);

@@ -18,14 +18,12 @@ package net.systemeD.halcyon.connection {
 		public var inlineStatus:Boolean = false;
 		public var cssTransform:CSSTransform;
         protected var apiBaseURL:String;
-        protected var policyURL:String;
         protected var params:Object;
 
-		public function Connection(cname:String,api:String,policy:String,initparams:Object=null,transform:CSSTransform=null) {
+		public function Connection(cname:String,api:String,initparams:Object=null,transform:CSSTransform=null) {
 			initparams = (initparams!=null ? initparams:{});
 			name=cname;
 			apiBaseURL=api;
-			policyURL=policy;
 			params=initparams;
 			cssTransform=transform;
 		}
@@ -36,15 +34,15 @@ package net.systemeD.halcyon.connection {
 			return defaultValue;
         }
 
-        public function get apiBase():String {
-            return apiBaseURL;
-        }
+		// API base
+        public function get apiBase():String { return apiBaseURL; }
+		public function set apiBase(api:String):void { apiBaseURL = api; }
+		public function get apiDomain():String { return apiBaseURL.replace(/(^https?:\/\/.+?\/).+$/, "$1"); }
 
-        public function get serverName():String {
-            return getParam("serverName", "Localhost");
-        }
-
-		public function getEnvironment(responder:Responder):void {}
+		// OAuth getters
+		public function get oauthRequestToken():String { return apiDomain+"oauth/request_token"; }
+		public function get oauthAccessToken():String { return apiDomain+"oauth/access_token"; }
+		public function get oauthAuthURL():String { return apiDomain+"oauth/authorize"; }
 
         // connection events
         public static var LOAD_STARTED:String = "load_started";

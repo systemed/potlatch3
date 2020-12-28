@@ -16,8 +16,8 @@ package net.systemeD.halcyon.connection {
 	*/
 	public class XMLBaseConnection extends Connection {
 
-		public function XMLBaseConnection(name:String,api:String,policy:String,initparams:Object) {
-			super(name,api,policy,initparams);
+		public function XMLBaseConnection(name:String,api:String,initparams:Object) {
+			super(name,api,initparams);
 		}
 		
 		protected function loadedMap(event:Event):void {

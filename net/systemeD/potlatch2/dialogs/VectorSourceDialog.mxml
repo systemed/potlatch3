@@ -206,7 +206,7 @@
 	/** Launch importer for remotely hosted files. */
 	private function loadFiles(url:String):void {
 		var names:Array=url.split('/'); var name:String=names[names.length-1];
-		var connection:Connection = new Connection(name, url, null, null, CSSTransform.getInstance());
+		var connection:Connection = new Connection(name, url, null, CSSTransform.getInstance());
 		var importer:Importer = findImporter(connection);
 		if (selectedType=='shp') {
 			var re:RegExp=/.shp$/i; url=url.replace(re,'');
@@ -227,7 +227,7 @@
 	
 	/** The user has chosen a file in the local 'Open File' dialogue. */
 	private function selectFileLocal(event:Event):void {
-		var connection:Connection = new Connection(localFileReference.name, '', null, null, CSSTransform.getInstance());
+		var connection:Connection = new Connection(localFileReference.name, '', null, CSSTransform.getInstance());
 		var importer:Importer = findImporter(connection);
 		importer.importFromLocalFile(localFileReference);
 	}

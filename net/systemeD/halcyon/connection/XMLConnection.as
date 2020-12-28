@@ -32,17 +32,10 @@ package net.systemeD.halcyon.connection {
         * Create a new XML connection
         * @param name The name of the connection
         * @param api The url of the OSM API server, e.g. http://api06.dev.openstreetmap.org/api/0.6/
-        * @param policy The url of the flash crossdomain policy to load,
-                        e.g. http://api06.dev.openstreetmap.org/api/crossdomain.xml
         * @param initparams Any further parameters for the connection, such as the serverName
         */
-		public function XMLConnection(name:String,api:String,policy:String,initparams:Object) {
-
-			super(name,api,policy,initparams);
-			if (policyURL != "") Security.loadPolicyFile(policyURL);
-
-            var oauthPolicy:String = getParam("oauth_policy", "");
-            if (oauthPolicy != "") Security.loadPolicyFile(oauthPolicy);
+		public function XMLConnection(name:String,api:String,initparams:Object) {
+			super(name,api,initparams);
 		}
 		
 		override public function loadBbox(left:Number,right:Number,

@@ -34,10 +34,6 @@ package net.systemeD.potlatch2.collections {
 					// Skip if just an example
 					if (!(set.@disabled=="true")) {
 
-						if (!(set.policyfile == undefined)) {
-							Security.loadPolicyFile(String(set.policyfile));
-						}
-
 		                // Check for any bounds for the vector layer. Obviously won't kick in during subsequent panning
 		                var validBbox:Boolean = false;
 		                if (set.@minlon && String(set.@minlon) != '') {

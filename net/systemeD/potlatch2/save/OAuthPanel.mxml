@@ -49,7 +49,7 @@
             var sig:IOAuthSignatureMethod = new OAuthSignatureMethod_HMAC_SHA1();
             var consumer:OAuthConsumer = getConsumer();
             var params:Object = new Object();
-            var oauthRequest:OAuthRequest = new OAuthRequest("GET", "https://www.openstreetmap.org/oauth/request_token",
+            var oauthRequest:OAuthRequest = new OAuthRequest("GET", connection.oauthRequestToken,
 				params, consumer, null);
             var urlStr:Object = oauthRequest.buildRequest(sig, OAuthRequest.RESULT_TYPE_URL_STRING)
 			
@@ -79,7 +79,7 @@
         private function loadedRequestToken(event:Event):void {
             trace("Yay! response: "+URLLoader(event.target).data);
             requestToken = getResponseToken(URLLoader(event.target));
-			authoriseURL = "https://www.openstreetmap.org/oauth/authorize?oauth_token="+requestToken.key;
+			authoriseURL = connection.oauthAuthURL + "?oauth_token=" + requestToken.key;
 			oauthHTML.htmlLoader.load(new URLRequest(authoriseURL));
 			tryAccessButton.enabled=true;
 			monitorTimeout = setTimeout(monitorForCallback, 100);
@@ -110,7 +110,7 @@
 			clearTimeout(monitorTimeout);
             var sig:IOAuthSignatureMethod = new OAuthSignatureMethod_HMAC_SHA1();
             var consumer:OAuthConsumer = getConsumer();
-            var oauthRequest:OAuthRequest = new OAuthRequest("GET", "https://www.openstreetmap.org/oauth/access_token",
+            var oauthRequest:OAuthRequest = new OAuthRequest("GET", connection.oauthAccessToken,
 				null, consumer, requestToken);
             var urlStr:Object = oauthRequest.buildRequest(sig, OAuthRequest.RESULT_TYPE_URL_STRING)
 

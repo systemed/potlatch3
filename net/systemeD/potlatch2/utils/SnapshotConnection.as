@@ -13,8 +13,8 @@ package net.systemeD.potlatch2.utils {
 
     public class SnapshotConnection extends XMLConnection {
 
-        public function SnapshotConnection(cname:String,api:String,policy:String,initparams:Object=null) {
-            super(cname,api,policy,initparams);
+        public function SnapshotConnection(cname:String,api:String,initparams:Object=null) {
+            super(cname,api,initparams);
             inlineStatus = true;
         }
 
