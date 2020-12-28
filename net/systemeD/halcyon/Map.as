@@ -377,8 +377,8 @@ package net.systemeD.halcyon {
 
 		public function changeScale(newscale:uint):void {
 			setScale(newscale);
-			var lat = (edge_t+edge_b)/2;
-			var lon = (edge_l+edge_r)/2;
+			var lat:Number = (edge_t+edge_b)/2;
+			var lon:Number = (edge_l+edge_r)/2;
 			if (setBase(lat,lon)) { tileset.empty(); }
 			updateCoordsFromLatLon(lat,lon);	// recentre
 			tileset.changeScale(scale);
