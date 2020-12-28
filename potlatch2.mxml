@@ -226,9 +226,10 @@
 				zoom: 2,
 				assets: "assets/icons.zip=icons/;assets/features_pois.zip=features/pois/"
 			};
-			for (k in SharedObject.getLocal('user_state',"/").data) {
-				 params[k]=SharedObject.getLocal('user_state',"/").data[k];
-			 }
+			var o:Object = SharedObject.getLocal('user_state',"/").data;
+			for (k in o) {
+				if (o[k]) { params[k]=o[k]; }
+			}
 
 			// Create map
 			var overlay:Sprite=TileSet.overlaySprite();

@@ -67,7 +67,11 @@
 
 			<mx:Text width="100%" text="The above settings are for using servers other than OpenStreetMap. After changing them, quit Potlatch and reopen it." />
 
-		    <s:Button id="logout" label="Log out" click="doLogout();" styleName="titleWindowButton" />
+			<s:HGroup>
+			    <s:Button id="logout" label="Log out" click="doLogout();" styleName="titleWindowButton" />
+				<s:Spacer width="20" />
+			    <s:Button id="reset" label="Reset" click="doReset();" styleName="titleWindowButton" />
+			</s:HGroup>
 		</s:NavigatorContent>
 	</mx:TabNavigator>
 
@@ -89,6 +93,7 @@
 	import mx.events.IndexChangedEvent;
     import net.systemeD.halcyon.Globals;
     import net.systemeD.halcyon.Map;
+    import net.systemeD.halcyon.AttentionEvent;
     import net.systemeD.halcyon.connection.Connection;
     import net.systemeD.halcyon.connection.XMLConnection;
     import net.systemeD.halcyon.connection.StatusFetcher;
@@ -151,6 +156,16 @@
 		logout.enabled = false;
 	}
 	
+	private function doReset():void {
+		conn.deleteAuthToken();
+		userState.setProperty("oauth_consumer_key",null);
+		userState.setProperty("oauth_consumer_secret",null);
+		dataServer.text="https://www.openstreetmap.org/api/0.6/";
+		overviewServer.text="https://tile.openstreetmap.org/";
+		dataServerSet(); overviewServerSet();
+		conn.dispatchEvent(new AttentionEvent(AttentionEvent.ALERT, null, "Connection parameters reset - please restart Potlatch"));
+	}
+
 	private function dataServerSet():void {
 		conn.apiBase = dataServer.text;
         userState.setProperty("api",dataServer.text); flush();
