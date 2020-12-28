@@ -53,8 +53,12 @@
 			  <s:TextInput id="dataServer" change="dataServerSet()" width="100%" />
 			</s:HGroup>
 			<s:HGroup width="100%" verticalAlign="middle">
-		      <s:Label text="OAuth consumer token: "/>
-			  <s:TextInput id="oauthToken" change="oauthTokenSet()" width="100%" />
+		      <s:Label text="Overview tile server: "/>
+			  <s:TextInput id="overviewServer" change="overviewServerSet()" width="100%" />
+			</s:HGroup>
+			<s:HGroup width="100%" verticalAlign="middle">
+		      <s:Label text="OAuth consumer key: "/>
+			  <s:TextInput id="oauthKey" change="oauthKeySet()" width="100%" />
 			</s:HGroup>
 			<s:HGroup width="100%" verticalAlign="middle">
 		      <s:Label text="OAuth consumer secret: "/>
@@ -109,6 +113,7 @@
 		// we only initialise the connection tab contents when it's clicked on
 		if (event.newIndex==1 && !connTabInited) {
 			dataServer.text = FlexGlobals.topLevelApplication.theMap.editableLayer.connection.apiBase;
+			overviewServer.text = userState.data['overview_tiles'] || "https://tile.openstreetmap.org/";
 			logout.enabled = FlexGlobals.topLevelApplication.theMap.editableLayer.connection.hasAccessToken();
 			connTabInited = true;
 		}
@@ -150,12 +155,15 @@
 		conn.apiBase = dataServer.text;
         userState.setProperty("api",dataServer.text); flush();
 	}
-	private function oauthTokenSet():void {
-		userState.setProperty("oauth_consumer_key",oauthToken.text); flush();
+	private function overviewServerSet():void {
+		userState.setProperty("overview_tiles",overviewServer.text); flush();
+	}
+	private function oauthKeySet():void {
+		userState.setProperty("oauth_consumer_key",oauthKey.text); flush();
 		conn.deleteAuthToken();
 	}
 	private function oauthSecretSet():void {
-		userState.setProperty("oauth_consumer_secret",oauthToken.text); flush();
+		userState.setProperty("oauth_consumer_secret",oauthSecret.text); flush();
 		conn.deleteAuthToken();
 	}
 

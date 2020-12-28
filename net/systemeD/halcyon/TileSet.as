@@ -38,7 +38,6 @@ package net.systemeD.halcyon {
 		private var _overlay:Sprite;
 		private var _isDim:Boolean;
 		private const MAXTILESLOADED:uint=30;
-		private const OVERVIEW_TILES:String = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 		private var sharpenFilter:BitmapFilter = new ConvolutionFilter(3, 3, 
 			[0, -1, 0,
@@ -71,6 +70,12 @@ package net.systemeD.halcyon {
 			while (numChildren) { removeChildAt(0); }
 			createSprites();
 			if (update) { this.update(); }
+		}
+
+		public function get overviewURL():String {
+			var obj:SharedObject = SharedObject.getLocal("user_state","/");
+			var url:String = obj.data['overview_tiles'] || "https://tile.openstreetmap.org/";
+			return url+"{z}/{x}/{y}.png";
 		}
 		
 		private function createSprites():void {
@@ -188,7 +193,7 @@ package net.systemeD.halcyon {
 		// Assemble tile URL
 		
 		private function tileURL(tx:int,ty:int,tz:uint):String {
-			var base:String = tz<_map.MINSCALE_DATA ? OVERVIEW_TILES : baseurl;
+			var base:String = tz<_map.MINSCALE_DATA ? overviewURL : baseurl;
 			var sch:String  = tz<_map.MINSCALE_DATA ? 'tms' : scheme;
 
 			var t:String='';
