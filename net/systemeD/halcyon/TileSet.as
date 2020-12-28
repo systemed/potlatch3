@@ -79,7 +79,7 @@ package net.systemeD.halcyon {
 			}
 		}
 		
-		private function empty():void {
+		public function empty():void {
 			for (var tilename:String in tiles) {
 				if (tiles[tilename].parent) tiles[tilename].parent.removeChild(tiles[tilename]);
 				if (tiles[tilename] is Loader) tiles[tilename].unload();
