@@ -10,7 +10,7 @@
   <mx:ArrayCollection id="changesetTags">
     <fx:Object k="created_by" v="Potlatch"/>
     <fx:Object k="version" v="{application.version}"/>
-    <fx:Object k="build" v="{application.build_number}"/>
+    <fx:Object k="build" v="{application.build_date}"/>
     <fx:Object k="os" v="{Capabilities.os}"/>
   </mx:ArrayCollection>
   </fx:Declarations>
