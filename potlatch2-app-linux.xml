@@ -1,5 +1,5 @@
 <application xmlns="http://ns.adobe.com/air/application/2.6"> 
-	<id>net.systemeD.potlatch2</id> 
+	<id>net.systemed.potlatch</id> 
 	<versionNumber>3.0</versionNumber> 
 	<filename>Potlatch</filename> 
 	<initialWindow> 
