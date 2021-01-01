@@ -1,7 +1,7 @@
 package net.systemeD.potlatch2
 {
     // As seen at: http://www.pathf.com/blogs/2008/08/custom-flex-3-lightweight-preloader-with-source-code/
-    // Can be "resued without restriction", so say the original authors
+    // Can be "reused without restriction", so say the original authors
 
     import flash.display.Sprite;
     import flash.events.Event;

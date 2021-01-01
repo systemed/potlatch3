@@ -68,7 +68,7 @@
         
         private function requestTokenError(event:IOErrorEvent):void {
 			tryAccessButton.enabled=false;
-            trace("error occured... last status was: "+lastHTTPStatus);
+            trace("error occurred... last status was: "+lastHTTPStatus);
 			if (lastHTTPStatus==401) {
 				oauthHTML.htmlLoader.loadString("Sorry, the OpenStreetMap server refused to authorise Potlatch.");
             } else {

@@ -129,7 +129,7 @@ package net.systemeD.controls {
 		 * and the vertical directions.
 		 * If the direction is set to "horizontal", then the component can only be resized
 		 * in the horizontal direction.
-		 * Similarily when the direction is "vertical" only vertical resizing is allowed.
+		 * Similarly when the direction is "vertical" only vertical resizing is allowed.
 		 */
 		public function get resizeDirection():String {
 			var direction:String = DIRECTION_BOTH;

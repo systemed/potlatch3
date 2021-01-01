@@ -149,7 +149,7 @@ package net.systemeD.controls {
 				}
 			}
 
-			// Constain the movement by the parent's bounds?
+			// Constrain the movement by the parent's bounds?
 			var bounds:Rectangle = null;
 			if (constrainToBounds != null) {
 				bounds = constrainToBounds;

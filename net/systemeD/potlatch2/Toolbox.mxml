@@ -120,7 +120,7 @@
 
 		public function init(controller:EditController):void {
 			this.controller=controller;
-			/* check if the toolbox was explictly turned off in a previous session */
+			/* check if the toolbox was explicitly turned off in a previous session */
 			if( SharedObject.getLocal("user_state","/").data['toolbox_visible'] == false) {
 			  this.visible = false;
 			}
