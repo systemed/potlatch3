@@ -28,7 +28,7 @@ package net.systemeD.potlatch2.mapfeatures {
 
         /** Determines whether a given edit control (editor) should be used for a given entity, given a certain category page is open.
         *
-        * If not overriden by a child class, the behaviour is "always": show the edit control on the "Basic" page, and on the appropriate category page.
+        * If not overridden by a child class, the behaviour is "always": show the edit control on the "Basic" page, and on the appropriate category page.
         *
         */
         public function isEditorPresent(editor:EditorFactory, forEntity:Entity, forCategory:String):Boolean {

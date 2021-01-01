@@ -69,7 +69,7 @@ package net.systemeD.potlatch2.mapfeatures {
             subcategory = String(inputXML.@subcategory);
         }
 
-        /** Whether the tags on an entity correspond to those for the edit control. By default, returns true - must be overriden by more useful behaviour. */
+        /** Whether the tags on an entity correspond to those for the edit control. By default, returns true - must be overridden by more useful behaviour. */
         public function areTagsMatching(entity:Entity):Boolean {
             return true;
         }
