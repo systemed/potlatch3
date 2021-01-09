@@ -131,6 +131,7 @@ package net.systemeD.potlatch2.collections {
 		public function getAvailableImagery(map:Map):ArrayCollection {
 			var available:Array=[];
 			for each (var bg:Object in collection) {
+				if (bg.type=='wms') continue;
 				if (bg.extent && bg.extent.polygon) {
 					// check if in boundary polygon
 					var included:Boolean=false;
@@ -148,7 +149,7 @@ package net.systemeD.potlatch2.collections {
 					     (map.edge_b<bg.extent.bbox.min_lat && map.edge_t>bg.extent.bbox.max_lat))) {
 						available.push(bg);
 					}
-				} else if (!bg.type || bg.type!='wms') {
+				} else if (!bg.type) {
 					// if there's no bbox (i.e. global set) and default is set, include it
 					if (bg.name=='None' || bg.default || bg.userDefined) { available.push(bg); }
 				}
