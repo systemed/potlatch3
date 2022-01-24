@@ -169,6 +169,7 @@
 		
 		private function startApp(event:Event):void {
 			controlbar.setStyle('dropShadowEnabled',"false");	// Flex 4 doesn't permit this in Application.css
+			trace("Launching Potlatch 3 with logging enabled");	// if you see this...
 
 			// Set font
 			var FontLibrary:Class = event.target.applicationDomain.getDefinition("FontLibrary") as Class;

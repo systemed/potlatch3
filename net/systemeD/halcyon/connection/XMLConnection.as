@@ -377,6 +377,7 @@ package net.systemeD.halcyon.connection {
                     continue;
                     
                 var xml:XML = serialise(entity);
+                changeset.expandBoundingBox(entity);
                 xml.@changeset = changeset.id;
                 create.appendChild(xml);
             }
@@ -393,6 +394,7 @@ package net.systemeD.halcyon.connection {
                     continue;
                     
                 var xml:XML = serialise(entity);
+                changeset.expandBoundingBox(entity);
                 xml.@changeset = changeset.id;
                 del.appendChild(xml);
             }
@@ -408,6 +410,7 @@ package net.systemeD.halcyon.connection {
                     continue;
                     
                 var xml:XML = serialise(entity);
+                changeset.expandBoundingBox(entity);
                 xml.@changeset = changeset.id;
                 modify.appendChild(xml);
             }

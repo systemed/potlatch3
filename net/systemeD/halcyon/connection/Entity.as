@@ -80,6 +80,11 @@ package net.systemeD.halcyon.connection {
 		public function get connection():Connection {
 			return _connection;
 		}
+		
+		/** Bounding box for the entity. */
+		public function get boundingBox():Object {
+			return null;
+		}
 
         /** Set a bunch of properties in one hit. Implicitly makes entity not deleted. */
         public function updateEntityProperties(version:uint, tags:Object, loaded:Boolean, parentsLoaded:Boolean, uid:Number, timestamp:String, user:String):void {

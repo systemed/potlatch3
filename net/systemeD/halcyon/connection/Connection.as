@@ -541,6 +541,26 @@ package net.systemeD.halcyon.connection {
 			return 0;
 		}
 
+		// Assess if user's changes are too far away from the currently open changeset
+
+		public function changesAreAfar():Boolean {
+			if (!changeset.bboxInitialised) return false;
+			var centreLon:Number = (changeset.minLon + changeset.maxLon) / 2;
+			var centreLat:Number = (changeset.minLat + changeset.maxLat) / 2;
+			var entity:Entity;
+			for each (entity in nodes) { if (isAfar(entity,centreLat,centreLon)) return true; }
+			for each (entity in ways ) { if (isAfar(entity,centreLat,centreLon)) return true; }
+			return false;
+		}
+		public function isAfar(entity:Entity, centreLat:Number, centreLon:Number):Boolean {
+			if (entity.id>0 && !entity.deleted && !entity.isDirty) return false;
+			var bbox:Object = entity.boundingBox; if (!bbox) return false;
+			var lon:Number  = (bbox.min_lon + bbox.max_lon) / 2;
+			var lat:Number  = (bbox.min_lat + bbox.max_lat) / 2;
+			var dist:Number = Trace.greatCircle(lat,lon, centreLat,centreLon); // metres
+			return (dist > 300000); // 200km
+		}
+
 		// Error-handling
 		
 		protected function throwConflictError(entity:Entity,serverVersion:uint,message:String):void {

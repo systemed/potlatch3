@@ -42,6 +42,11 @@ package net.systemeD.halcyon.connection {
 			for each (var node:Node in nodes) { expandBbox(node); }
 		}
 
+		public override function get boundingBox():Object {
+			calculateBbox();
+			return { min_lat: edge_b, min_lon: edge_l, max_lat: edge_t, max_lon: edge_r };
+		}
+
 		public function expandBbox(node:Node):void {
 			edge_l=Math.min(edge_l,node.lon);
 			edge_r=Math.max(edge_r,node.lon);

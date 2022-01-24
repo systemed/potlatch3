@@ -36,7 +36,7 @@ package net.systemeD.halcyon.connection {
 			}
 			return list;
 		}
-
+		
         public function findEntityMemberIndex(entity:Entity):int {
             for (var index:uint = 0; index < members.length; index++) {
                 var member:RelationMember = members[index];

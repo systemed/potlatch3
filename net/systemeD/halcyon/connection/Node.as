@@ -29,6 +29,10 @@ package net.systemeD.halcyon.connection {
         public function get lon():Number {
             return _lon;
         }
+		
+		public override function get boundingBox():Object {
+			return { min_lat: _lat, min_lon: _lon, max_lat: _lat, max_lon: _lon };
+		}
 
         private function setLatLonImmediate(lat:Number, lon:Number):void {
             connection.removeDupe(this);

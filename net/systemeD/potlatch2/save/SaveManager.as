@@ -31,6 +31,15 @@ package net.systemeD.potlatch2.save {
 					return;
 				}
 			}
+			var cs:Changeset = connection.getActiveChangeset();
+			if (cs && connection.changesAreAfar()) {
+				Alert.show("Your previous changeset is still open and is a long way away. Create a new changeset?","Large changeset",
+					Alert.NO | Alert.YES, null, function(e:CloseEvent):void {
+						if (e.detail==Alert.YES) { connection.closeChangeset(); }
+						instance.save(instance.saveData,connection);
+					}, null, Alert.YES);
+				return;
+			}
             instance.save(instance.saveData,connection);
         }
 
