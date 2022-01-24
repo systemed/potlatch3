@@ -6,6 +6,7 @@ package net.systemeD.potlatch2.collections {
 	import flash.system.ApplicationDomain;
 	import net.systemeD.halcyon.Map;
 	import net.systemeD.halcyon.MapEvent;
+	import net.systemeD.potlatch2.collections.AdditionalImagery;
 	import net.systemeD.potlatch2.FunctionKeyManager;
 	import net.systemeD.P3;
 	import mx.collections.ArrayCollection;
@@ -57,6 +58,7 @@ package net.systemeD.potlatch2.collections {
 			var isSet:Boolean=false;
             var backgroundSet:Boolean = false;
 			collection.unshift({ name: "None", url: "" });
+			for each (bg in AdditionalImagery.SOURCES) { collection.push(bg); }
 
 			// Is a set already chosen? (default to Bing if not)
 			_selected=null;
@@ -149,7 +151,7 @@ package net.systemeD.potlatch2.collections {
 					     (map.edge_b<bg.extent.bbox.min_lat && map.edge_t>bg.extent.bbox.max_lat))) {
 						available.push(bg);
 					}
-				} else if (!bg.type) {
+				} else if (!bg.type || bg.type=='tms' || bg.type=='bing') {
 					// if there's no bbox (i.e. global set) and default is set, include it
 					if (bg.name=='None' || bg.default || bg.userDefined) { available.push(bg); }
 				}
