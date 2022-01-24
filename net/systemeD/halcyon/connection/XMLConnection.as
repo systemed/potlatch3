@@ -190,13 +190,13 @@ package net.systemeD.halcyon.connection {
             dispatchEvent(new Event(NEW_CHANGESET_ERROR));
         }
 
-		override public function closeChangeset(showConfirm:Boolean=true):void {
+		override public function closeChangeset(callback:Function=null):void {
 			var cs:Changeset = getActiveChangeset();
 			if (!cs) return;
 			
 			sendOAuthPut(apiBaseURL+"changeset/"+cs.id+"/close",
 						 null,
-						 showConfirm ? changesetCloseComplete : function(event:Event):void {}, changesetCloseError, recordStatus);
+						 callback || changesetCloseComplete, changesetCloseError, recordStatus);
 			closeActiveChangeset();
 		}
 		
@@ -315,7 +315,7 @@ package net.systemeD.halcyon.connection {
             }
 
             dispatchEvent(new SaveCompleteEvent(SAVE_COMPLETED, true));
-			if (closeAfterwards) { closeChangeset(false); } else { freshenActiveChangeset(); }
+			if (closeAfterwards) { closeChangeset(function(event:Event):void {}); } else { freshenActiveChangeset(); }
             markClean(); // marks the connection clean. Pressing undo from this point on leads to unexpected results
             MainUndoStack.getGlobalStack().breakUndo(); // so, for now, break the undo stack
         }

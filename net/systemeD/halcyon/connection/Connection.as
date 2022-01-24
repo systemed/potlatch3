@@ -644,7 +644,7 @@ package net.systemeD.halcyon.connection {
 		public function deleteAuthToken():void {}
         public function setAccessToken(key:String, secret:String):void {}
         public function createChangeset(tags:Object):void {}
-        public function closeChangeset(showConfirm:Boolean=true):void {}
+        public function closeChangeset(callback:Function=null):void {}
         public function uploadChanges(closeAfterwards:Boolean=false):* {}
         public function fetchUserTraces(refresh:Boolean=false):void {}
         public function fetchTrace(id:Number, callback:Function):void {}

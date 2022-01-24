@@ -388,6 +388,14 @@
 
             // Check if Tiger highlighting should be enabled from saved object
             Globals.vars.highlightTiger = obj.data['tiger_highlighted'];
+			
+			// trap application exit and close changeset if still open
+			NativeApplication.nativeApplication.addEventListener(Event.EXITING, function(event:Event):void {
+				if (conn.getActiveChangeset()) {
+					event.preventDefault(); event.stopImmediatePropagation();
+					conn.closeChangeset(function(event:Event):void { NativeApplication.nativeApplication.exit(); });
+				}
+			});
 		}
 		
 		public function onMapError(mapEvent:MapEvent):void {
