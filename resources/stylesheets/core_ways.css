@@ -6,7 +6,7 @@ way[highway=trunk],way[highway=trunk_link],
 way[highway=primary],way[highway=primary_link],
 way[highway=secondary],way[highway=secondary_link],
 way[highway=tertiary],way[highway=tertiary_link],
-way[highway=residential],way[highway=unclassified]  { text: name; text-color: black; font-size: 12; text-position: offset; text-offset: 10; text-halo-color: white; text-halo-radius: 2; linecap: round; casing-linecap: round }
+way[highway=residential],way[highway=unclassified]  { set cased_road; text: name; text-color: black; font-size: 12; text-position: offset; text-offset: 10; text-halo-color: white; text-halo-radius: 2; linecap: round; casing-linecap: round }
 way[highway=motorway],way[highway=motorway_link]    { z-index: 9; color: #809BC0; width: 7; casing-color: #1e375a; casing-width: 1; }
 way[highway=trunk],way[highway=trunk_link]          { z-index: 9; color: #7FC97F; width: 7; casing-color: #245424; casing-width: 1; }
 way[highway=primary],way[highway=primary_link]      { z-index: 8; color: #E46D71; width: 7; casing-color: #651316; casing-width: 1; }
@@ -14,11 +14,14 @@ way[highway=secondary],way[highway=secondary_link]  { z-index: 7; color: #FDBF6F
 way[highway=tertiary],way[highway=tertiary_link]    { z-index: 6; color: #FEFECB; width: 5; casing-color: #626202; casing-width: 1; }
 way[highway=unclassified]                           { z-index: 6; color: #D0D0D0; width: 5; casing-width: 1; }
 way[highway=residential]                            { z-index: 5; color: #E8E8E8; width: 5; casing-color: gray; casing-width: 1; }
-way[highway=service][service!=parking_aisle]        { color: white; width: 3; casing-color: gray; casing-width: 1; }
-way[highway=service][service=parking_aisle]         { color: white; width: 1; casing-color: #aaaaaa; casing-width: 1; }
+way[highway=service][service!=parking_aisle]        { set cased_road; color: white; width: 3; casing-color: gray; casing-width: 1; }
+way[highway=service][service=parking_aisle]         { set cased_road; color: white; width: 1; casing-color: #aaaaaa; casing-width: 1; }
 way[highway=service][service=alley]                 { color: white; width: 2; dashes: 6,2; casing-color: black; casing-width: 1; }
 way[highway=road]                                   { color: gray; width: 5; casing-color: white; casing-width: 1; }
 way[highway=living_street]                          { z-index: 5; color: #ddffee; width: 3; casing-color: #555555; casing-width: 1; }
+way[cased_road][surface][surface!=asphalt][surface!=paved][surface!=concrete] { casing-color: saddlebrown; casing-width: 3; }
+way[cased_road][tracktype][tracktype!=grade1] { casing-color: saddlebrown; casing-width: 3; }
+
 
 /* Road areas */
 
