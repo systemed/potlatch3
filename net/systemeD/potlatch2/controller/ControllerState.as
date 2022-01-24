@@ -133,9 +133,11 @@ package net.systemeD.potlatch2.controller {
 				paint.setHighlight(focus, { hover: true });
 			} else if ( event.type == MouseEvent.MOUSE_OUT && paint && paint.interactive ) {
 				paint.setHighlight(focus, { hover: false });
-			} else if ( event.type == MouseEvent.MOUSE_WHEEL && Capabilities.os.toLowerCase().search("mac")==-1 ) {
-				if      (event.delta > 0) { map.zoomIn(); }
-				else if (event.delta < 0) { map.zoomOut(); }
+			} else if ( event.type == MouseEvent.MOUSE_WHEEL) { // && Capabilities.os.toLowerCase().search("mac")==-1 ) {
+				var lat:Number = map.coord2lat(event.localY);
+				var lon:Number = map.coord2lon(event.localX);
+				if      (event.delta > 0) { map.zoomIn(1,lat,lon); }
+				else if (event.delta < 0) { map.zoomOut(1,lat,lon); }
 			}
 
 			if ( paint && paint.isBackground ) {

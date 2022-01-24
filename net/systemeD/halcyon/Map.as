@@ -361,12 +361,12 @@ package net.systemeD.halcyon {
 				getLayerAt(i).redrawPOIs();
 		}
 		
-		public function zoomIn(increment:uint=1):void {
-			changeScale(Math.min(scale+increment, MAXSCALE));
+		public function zoomIn(increment:uint=1, toLat:Number=NaN, toLon:Number=NaN):void {
+			changeScale(Math.min(scale+increment, MAXSCALE), toLat, toLon);
 		}
-
-		public function zoomOut(increment:uint=1):void {
-			changeScale(Math.max(scale-increment, MINSCALE_TILES));
+		
+		public function zoomOut(increment:uint=1, toLat:Number=NaN, toLon:Number=NaN):void {
+			changeScale(Math.max(scale-increment, MINSCALE_TILES), toLat, toLon);
 		}
 		
 		public function setScale(newscale:uint):void {
@@ -375,10 +375,10 @@ package net.systemeD.halcyon {
 			setScaleFactor(scale);
 		}
 
-		public function changeScale(newscale:uint):void {
+		public function changeScale(newscale:uint,toLat:Number=NaN,toLon:Number=NaN):void {
 			setScale(newscale);
-			var lat:Number = (edge_t+edge_b)/2;
-			var lon:Number = (edge_l+edge_r)/2;
+			var lat:Number = isNaN(toLat) ? (edge_t+edge_b)/2 : toLat;
+			var lon:Number = isNaN(toLon) ? (edge_l+edge_r)/2 : toLon;
 			if (setBase(lat,lon)) { tileset.empty(); }
 			updateCoordsFromLatLon(lat,lon);	// recentre
 			tileset.changeScale(scale);
