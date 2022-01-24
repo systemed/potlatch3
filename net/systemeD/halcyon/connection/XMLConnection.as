@@ -190,13 +190,13 @@ package net.systemeD.halcyon.connection {
             dispatchEvent(new Event(NEW_CHANGESET_ERROR));
         }
 
-		override public function closeChangeset():void {
-            var cs:Changeset = getActiveChangeset();
+		override public function closeChangeset(showConfirm:Boolean=true):void {
+			var cs:Changeset = getActiveChangeset();
 			if (!cs) return;
 			
 			sendOAuthPut(apiBaseURL+"changeset/"+cs.id+"/close",
 						 null,
-						 changesetCloseComplete, changesetCloseError, recordStatus);
+						 showConfirm ? changesetCloseComplete : function(event:Event):void {}, changesetCloseError, recordStatus);
 			closeActiveChangeset();
 		}
 		
@@ -243,7 +243,7 @@ package net.systemeD.halcyon.connection {
 		/** Create XML changeset and send it to the server. Returns the XML string for use in the 'Show data' button.
 		    (We don't mind what's returned as long as it implements .toString() ) */
 
-        override public function uploadChanges():* {
+        override public function uploadChanges(closeAfterwards:Boolean=false):* {
             var changeset:Changeset = getActiveChangeset();
             var upload:XML = <osmChange version="0.6"/>
             upload.appendChild(addCreated(changeset, getAllNodeIDs, getNode, serialiseNode));
@@ -272,7 +272,9 @@ package net.systemeD.halcyon.connection {
 			serv.request=" ";
 			serv.resultFormat="e4x";
 			serv.requestTimeout=0;
-			serv.addEventListener(ResultEvent.RESULT, diffUploadComplete);
+			serv.addEventListener(ResultEvent.RESULT, function(event:ResultEvent):void {
+				diffUploadComplete(event, closeAfterwards);
+			});
 			serv.addEventListener(FaultEvent.FAULT, diffUploadIOError);
 			serv.send(upload);
 	        
@@ -280,7 +282,7 @@ package net.systemeD.halcyon.connection {
 			return upload;
         }
 
-        private function diffUploadComplete(event:ResultEvent):void {
+        private function diffUploadComplete(event:ResultEvent, closeAfterwards:Boolean):void {
 			var results:XML = XML(event.result);
 
 			// was it an error document?
@@ -313,7 +315,7 @@ package net.systemeD.halcyon.connection {
             }
 
             dispatchEvent(new SaveCompleteEvent(SAVE_COMPLETED, true));
-			freshenActiveChangeset();
+			if (closeAfterwards) { closeChangeset(false); } else { freshenActiveChangeset(); }
             markClean(); // marks the connection clean. Pressing undo from this point on leads to unexpected results
             MainUndoStack.getGlobalStack().breakUndo(); // so, for now, break the undo stack
         }

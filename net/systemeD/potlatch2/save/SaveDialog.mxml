@@ -87,6 +87,7 @@
   <mx:ControlBar>
     <mx:Button id="dataButton" label="View data" visible="false" click="processSequence.selectedChild=dataTab" styleName="titleWindowButton" />
     <mx:Spacer width="100%"/>
+    <mx:CheckBox id="closeChangeset" label="Close changeset" visible="true" selected="false"/>
     <mx:Button id="cancelButton" label="Cancel" click="close();" styleName="titleWindowButton" />
     <mx:Button id="saveButton" label="Save >" click="startSave();" styleName="titleWindowButton" />
   </mx:ControlBar>
@@ -115,6 +116,9 @@
 	public function setConnection(connection:Connection):void {
 		_connection=connection;
 		newChangeset=true;
+
+		var obj:SharedObject = SharedObject.getLocal("user_state","/");
+		if (obj.data.hasOwnProperty("close_changesets")) { closeChangeset.selected = obj.data["close_changesets"]; }
 	}
 
 	public function dontPrompt():void {
@@ -149,6 +153,10 @@
 	}
     
     private function startSave():void {
+
+        // remember 'close changeset' setting
+        var obj:SharedObject = SharedObject.getLocal("user_state","/");
+        obj.setProperty('close_changesets',closeChangeset.selected);
     
         // move to next sequence
         processSequence.selectedChild = createChangesetTab;
@@ -189,11 +197,12 @@
 
     private function changesetCreated(event:EntityEvent=null):void {
         var changeset:Changeset = _connection.getActiveChangeset();
+        closeChangeset.visible = false;
         addStatus("Saving to changeset "+changeset.id);
         
         saveProgress.label = "Uploading changes";
         _connection.addEventListener(Connection.SAVE_COMPLETED, saveCompleted);
-        var rawData:*=_connection.uploadChanges();
+        var rawData:*=_connection.uploadChanges(closeChangeset.selected);
         if (rawData) {
             dataText.text=rawData.toString();
             dataButton.visible=true;
